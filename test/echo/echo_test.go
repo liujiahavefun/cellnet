@@ -14,22 +14,50 @@ var log *golog.Logger = golog.New("test")
 
 var signal *test.SignalTester
 
+type Player struct {
+	name string
+}
+
+type PlayerConvertor struct {
+	socket.MessageContext
+}
+
+func (self *PlayerConvertor) Exec(context *socket.Context) {
+	context.Next().(interface {
+		SetPlayer(*Player)
+	}).SetPlayer(&Player{name: "pp"})
+}
+
+type PlayerContext struct {
+	player *Player
+}
+
+func (self *PlayerContext) SetPlayer(p *Player) {
+	self.player = p
+}
+
+type HandlerTestEchoACKWithPlayer struct {
+	socket.MessageContext
+	PlayerContext
+}
+
+func (self *HandlerTestEchoACKWithPlayer) Exec(context *socket.Context) {
+
+	msg := self.Msg.(*gamedef.TestEchoACK)
+
+	log.Debugln("server recv:", msg.String(), self.player)
+	self.Ses.Send(&gamedef.TestEchoACK{
+		Content: msg.String(),
+	})
+}
+
 func server() {
 
 	pipe := cellnet.NewEventPipe()
 
 	evq := socket.NewAcceptor(pipe).Start("127.0.0.1:7201")
 
-	socket.RegisterSessionMessage(evq, "gamedef.TestEchoACK", func(content interface{}, ses cellnet.Session) {
-		msg := content.(*gamedef.TestEchoACK)
-
-		log.Debugln("server recv:", msg.String())
-
-		ses.Send(&gamedef.TestEchoACK{
-			Content: msg.String(),
-		})
-
-	})
+	socket.RegisterSessionMessage2(evq, "gamedef.TestEchoACK", new(PlayerConvertor), new(HandlerTestEchoACKWithPlayer))
 
 	pipe.Start()
 
