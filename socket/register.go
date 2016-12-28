@@ -1,10 +1,6 @@
 package socket
 
-import (
-	"reflect"
-
-	"github.com/davyxu/cellnet"
-)
+import "github.com/davyxu/cellnet"
 
 // 注册连接消息
 func RegisterSessionMessage(eq cellnet.EventQueue, msgName string, userHandler func(interface{}, cellnet.Session)) *cellnet.MessageMeta {
@@ -97,31 +93,6 @@ func RegisterSessionMessage2(eq cellnet.EventQueue, msgName string, userHandlers
 				h.Exec(ctx)
 
 			}
-
-		}
-
-	})
-
-	return msgMeta
-}
-
-// 注册连接消息
-func RegisterPeerMessage(eq cellnet.EventQueue, msgName string, userHandler func(interface{}, cellnet.Peer)) *cellnet.MessageMeta {
-
-	msgMeta := cellnet.MessageMetaByName(msgName)
-
-	if msgMeta == nil {
-		log.Errorf("message register failed, %s", msgName)
-		return nil
-	}
-
-	eq.RegisterCallback(msgMeta.ID, func(data interface{}) {
-
-		if ev, ok := data.(*PeerEvent); ok {
-
-			rawMsg := reflect.New(msgMeta.Type).Interface()
-
-			userHandler(rawMsg, ev.P)
 
 		}
 

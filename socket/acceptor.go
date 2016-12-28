@@ -64,8 +64,6 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 
 	}()
 
-	self.PostData(NewPeerEvent(Event_PeerStart, self))
-
 	return self
 }
 
@@ -74,8 +72,6 @@ func (self *socketAcceptor) Stop() {
 	if !self.running {
 		return
 	}
-
-	self.PostData(NewPeerEvent(Event_PeerStop, self))
 
 	self.running = false
 
@@ -88,8 +84,6 @@ func NewAcceptor(pipe cellnet.EventPipe) cellnet.Peer {
 		sessionMgr:  newSessionManager(),
 		peerProfile: newPeerProfile(pipe.AddQueue()),
 	}
-
-	self.PostData(NewPeerEvent(Event_PeerInit, self))
 
 	return self
 }

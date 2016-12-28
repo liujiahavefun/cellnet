@@ -24,25 +24,6 @@ message SessionClosed
 	
 }
 
-// 端初始化
-message PeerInit
-{
-	
-}
-
-
-// 端启动
-message PeerStart
-{
-	
-}
-
-// 端停止
-message PeerStop
-{
-	
-}	
-
 
 // ==========================================================
 // RPC

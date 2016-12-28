@@ -37,8 +37,6 @@ func (self *socketConnector) Start(address string) cellnet.Peer {
 
 	go self.connect(address)
 
-	self.PostData(NewPeerEvent(Event_PeerStart, self))
-
 	return self
 }
 
@@ -124,8 +122,6 @@ func (self *socketConnector) Stop() {
 
 	if self.conn != nil {
 
-		self.PostData(NewPeerEvent(Event_PeerStop, self))
-
 		self.conn.Close()
 	}
 
@@ -141,8 +137,6 @@ func NewConnector(pipe cellnet.EventPipe) cellnet.Peer {
 		peerProfile: newPeerProfile(pipe.AddQueue()),
 		closeSignal: make(chan bool),
 	}
-
-	self.PostData(NewPeerEvent(Event_PeerInit, self))
 
 	return self
 }
