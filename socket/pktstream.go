@@ -158,15 +158,11 @@ func (self *ltvStream) Write(pkt *cellnet.Packet) (err error) {
 	return
 }
 
-// 完整发送所有封包
+//完整发送所有封包
 func (self *ltvStream) writeFull(p []byte) error {
-
 	sizeToWrite := len(p)
-
 	for {
-
 		n, err := self.outputWriter.Write(p)
-
 		if err != nil {
 			return err
 		}
@@ -180,11 +176,9 @@ func (self *ltvStream) writeFull(p []byte) error {
 	}
 
 	return nil
-
 }
 
 func (self *ltvStream) Flush() error {
-
 	var err error
 	for tryTimes := 0; tryTimes < TOTAL_SEND_TRY_TIMES; tryTimes++ {
 
