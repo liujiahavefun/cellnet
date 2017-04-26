@@ -12,9 +12,16 @@ type PacketList struct {
 	listCond  *sync.Cond
 }
 
-func (self *PacketList) Add(p *cellnet.Packet) {
+func NewPacketList() *PacketList {
+	self := &PacketList{}
+	self.listCond = sync.NewCond(&self.listGuard)
+
+	return self
+}
+
+func (self *PacketList) Add(packet *cellnet.Packet) {
 	self.listGuard.Lock()
-	self.list = append(self.list, p)
+	self.list = append(self.list, packet)
 	self.listGuard.Unlock()
 
 	self.listCond.Signal()
@@ -25,13 +32,11 @@ func (self *PacketList) Reset() {
 }
 
 func (self *PacketList) BeginPick() []*cellnet.Packet {
-
+	//condition variable标准用法
 	self.listGuard.Lock()
-
 	for len(self.list) == 0 {
 		self.listCond.Wait()
 	}
-
 	self.listGuard.Unlock()
 
 	self.listGuard.Lock()
@@ -40,14 +45,6 @@ func (self *PacketList) BeginPick() []*cellnet.Packet {
 }
 
 func (self *PacketList) EndPick() {
-
 	self.Reset()
 	self.listGuard.Unlock()
-}
-
-func NewPacketList() *PacketList {
-	self := &PacketList{}
-	self.listCond = sync.NewCond(&self.listGuard)
-
-	return self
 }

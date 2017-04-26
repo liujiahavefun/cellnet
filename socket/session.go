@@ -26,6 +26,41 @@ type ltvSession struct {
 	sendList *PacketList
 }
 
+func newSession(stream *ltvStream, eq cellnet.EventQueue, p cellnet.Peer) *ltvSession {
+	self := &ltvSession{
+		stream:          stream,
+		p:               p,
+		needNotifyWrite: true,
+		sendList:        NewPacketList(),
+	}
+
+	// 使用peer的统一设置
+	self.stream.maxPacketSize = p.MaxPacketSize()
+
+	// 布置接收和发送2个任务
+	// bug fix感谢viwii提供的线索
+	self.endSync.Add(2)
+
+	go func() {
+
+		// 等待2个任务结束
+		self.endSync.Wait()
+
+		// 在这里断开session与逻辑的所有关系
+		if self.OnClose != nil {
+			self.OnClose()
+		}
+	}()
+
+	// 接收线程
+	go self.recvThread(eq)
+
+	// 发送线程
+	go self.sendThread()
+
+	return self
+}
+
 func (self *ltvSession) ID() int64 {
 	return self.id
 }
@@ -148,40 +183,4 @@ func (self *ltvSession) recvThread(eq cellnet.EventQueue) {
 
 	// 通知接收线程ok
 	self.endSync.Done()
-}
-
-func newSession(stream *ltvStream, eq cellnet.EventQueue, p cellnet.Peer) *ltvSession {
-
-	self := &ltvSession{
-		stream:          stream,
-		p:               p,
-		needNotifyWrite: true,
-		sendList:        NewPacketList(),
-	}
-
-	// 使用peer的统一设置
-	self.stream.maxPacketSize = p.MaxPacketSize()
-
-	// 布置接收和发送2个任务
-	// bug fix感谢viwii提供的线索
-	self.endSync.Add(2)
-
-	go func() {
-
-		// 等待2个任务结束
-		self.endSync.Wait()
-
-		// 在这里断开session与逻辑的所有关系
-		if self.OnClose != nil {
-			self.OnClose()
-		}
-	}()
-
-	// 接收线程
-	go self.recvThread(eq)
-
-	// 发送线程
-	go self.sendThread()
-
-	return self
 }

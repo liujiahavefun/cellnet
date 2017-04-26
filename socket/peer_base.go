@@ -6,8 +6,18 @@ import "github.com/davyxu/cellnet"
 type peerBase struct {
 	cellnet.EventDispatcher
 	cellnet.EventQueue
+
 	name          string
 	maxPacketSize int
+}
+
+func newPeerBase(evq cellnet.EventQueue) *peerBase {
+	self := &peerBase{
+		EventDispatcher: cellnet.NewEventDispatcher(),
+		EventQueue:      evq,
+	}
+
+	return self
 }
 
 func (self *peerBase) SetName(name string) {
@@ -24,13 +34,4 @@ func (self *peerBase) SetMaxPacketSize(size int) {
 
 func (self *peerBase) MaxPacketSize() int {
 	return self.maxPacketSize
-}
-
-func newPeerBase(evq cellnet.EventQueue) *peerBase {
-	self := &peerBase{
-		EventDispatcher: cellnet.NewEventDispatcher(),
-		EventQueue:      evq,
-	}
-
-	return self
 }

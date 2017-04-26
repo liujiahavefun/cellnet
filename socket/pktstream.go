@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	PackageHeaderSize = 8 // MsgID(uint32) + Ser(uint16) + Size(uint16)
+	PackageHeaderSize = 8    // MsgID(uint32) + Ser(uint16) + Size(uint16)
+	TOTAL_SEND_TRY_TIMES = 100
 )
 
-// 封包流
+//封包流
 type PacketStream interface {
 	Read() (*cellnet.Packet, error)
 	Write(pkt *cellnet.Packet) error
@@ -24,6 +25,12 @@ type PacketStream interface {
 	Close() error
 	Raw() net.Conn
 }
+
+var (
+	packageTagNotMatch     = errors.New("ReadPacket: package tag not match")
+	packageDataSizeInvalid = errors.New("ReadPacket: package crack, invalid size")
+	packageTooBig          = errors.New("ReadPacket: package too big")
+)
 
 type ltvStream struct {
 	recvser      uint16
@@ -40,13 +47,22 @@ type ltvStream struct {
 	maxPacketSize int
 }
 
-var (
-	packageTagNotMatch     = errors.New("ReadPacket: package tag not match")
-	packageDataSizeInvalid = errors.New("ReadPacket: package crack, invalid size")
-	packageTooBig          = errors.New("ReadPacket: package too big")
-)
+//封包流 relay模式: 在封包头有clientid信息
+func NewPacketStream(conn net.Conn) *ltvStream {
+	s := &ltvStream{
+		conn:             conn,
+		recvser:          1,
+		sendser:          1,
+		outputWriter:     bufio.NewWriter(conn),
+		outputHeadBuffer: bytes.NewBuffer([]byte{}),
+		inputHeadBuffer:  make([]byte, PackageHeaderSize),
+	}
+	s.headReader = bytes.NewReader(s.inputHeadBuffer)
 
-// 从socket读取1个封包,并返回
+	return s
+}
+
+//从socket读取1个封包,并返回
 func (self *ltvStream) Read() (p *cellnet.Packet, err error) {
 
 	if _, err = self.headReader.Seek(0, 0); err != nil {
@@ -105,39 +121,38 @@ func (self *ltvStream) Read() (p *cellnet.Packet, err error) {
 
 // 将一个封包发送到socket
 func (self *ltvStream) Write(pkt *cellnet.Packet) (err error) {
-
-	// 防止将Send放在go内造成的多线程冲突问题
+	//防止将Send放在go内造成的多线程冲突问题
 	self.sendtagGuard.Lock()
 	defer self.sendtagGuard.Unlock()
 
 	self.outputHeadBuffer.Reset()
 
-	// 写ID
+	//写ID
 	if err = binary.Write(self.outputHeadBuffer, binary.LittleEndian, pkt.MsgID); err != nil {
 		return err
 	}
 
-	// 写序号
+	//写序号
 	if err = binary.Write(self.outputHeadBuffer, binary.LittleEndian, self.sendser); err != nil {
 		return err
 	}
 
-	// 写包大小
+	//写包大小
 	if err = binary.Write(self.outputHeadBuffer, binary.LittleEndian, uint16(len(pkt.Data)+PackageHeaderSize)); err != nil {
 		return err
 	}
 
-	// 发包头
+	//发包头
 	if err = self.writeFull(self.outputHeadBuffer.Bytes()); err != nil {
 		return err
 	}
 
-	// 发包内容
+	//发包内容
 	if err = self.writeFull(pkt.Data); err != nil {
 		return err
 	}
 
-	// 增加序号值
+	//增加序号值
 	self.sendser++
 
 	return
@@ -168,16 +183,14 @@ func (self *ltvStream) writeFull(p []byte) error {
 
 }
 
-const sendTotalTryCount = 100
-
 func (self *ltvStream) Flush() error {
 
 	var err error
-	for tryTimes := 0; tryTimes < sendTotalTryCount; tryTimes++ {
+	for tryTimes := 0; tryTimes < TOTAL_SEND_TRY_TIMES; tryTimes++ {
 
 		err = self.outputWriter.Flush()
 
-		// 如果没写完, flush底层会将没发完的buff准备好, 我们只需要重新调一次flush
+		//如果没写完, flush底层会将没发完的buff准备好, 我们只需要重新调一次flush
 		if err != io.ErrShortWrite {
 			break
 		}
@@ -186,28 +199,13 @@ func (self *ltvStream) Flush() error {
 	return err
 }
 
-// 关闭
+//关闭
 func (self *ltvStream) Close() error {
 	return self.conn.Close()
 }
 
-// 裸socket操作
+//裸socket操作
 func (self *ltvStream) Raw() net.Conn {
 	return self.conn
 }
 
-// 封包流 relay模式: 在封包头有clientid信息
-func NewPacketStream(conn net.Conn) *ltvStream {
-
-	s := &ltvStream{
-		conn:             conn,
-		recvser:          1,
-		sendser:          1,
-		outputWriter:     bufio.NewWriter(conn),
-		outputHeadBuffer: bytes.NewBuffer([]byte{}),
-		inputHeadBuffer:  make([]byte, PackageHeaderSize),
-	}
-	s.headReader = bytes.NewReader(s.inputHeadBuffer)
-
-	return s
-}

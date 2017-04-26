@@ -12,16 +12,21 @@ type socketAcceptor struct {
 	*sessionMgr
 
 	listener net.Listener
+	running bool //TODO: 用atomic代替
+}
 
-	running bool
+func NewAcceptor(evq cellnet.EventQueue) cellnet.Peer {
+	self := &socketAcceptor{
+		sessionMgr: newSessionManager(),
+		peerBase:   newPeerBase(evq),
+	}
+
+	return self
 }
 
 func (self *socketAcceptor) Start(address string) cellnet.Peer {
-
 	ln, err := net.Listen("tcp", address)
-
 	self.listener = ln
-
 	if err != nil {
 
 		log.Errorf("#listen failed(%s) %v", self.name, err.Error())
@@ -29,14 +34,12 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 	}
 
 	self.running = true
-
 	log.Infof("#listen(%s) %s ", self.name, address)
 
 	// 接受线程
 	go func() {
 		for self.running {
 			conn, err := ln.Accept()
-
 			if err != nil {
 				log.Errorf("#accept failed(%s) %v", self.name, err.Error())
 				self.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &gamedef.SessionAcceptFailed{Reason: err.Error()}))
@@ -45,13 +48,13 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 
 			// 处理连接进入独立线程, 防止accept无法响应
 			go func() {
-
 				ses := newSession(NewPacketStream(conn), self, self)
 
 				// 添加到管理器
 				self.sessionMgr.Add(ses)
 
 				// 断开后从管理器移除
+				// TODO: 这里可以再给外部一个回调，或者post一个事件
 				ses.OnClose = func() {
 					self.sessionMgr.Remove(ses)
 				}
@@ -61,31 +64,17 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 				// 通知逻辑
 				self.Post(self, NewSessionEvent(Event_SessionAccepted, ses, nil))
 			}()
-
 		}
-
 	}()
 
 	return self
 }
 
 func (self *socketAcceptor) Stop() {
-
 	if !self.running {
 		return
 	}
 
 	self.running = false
-
 	self.listener.Close()
-}
-
-func NewAcceptor(evq cellnet.EventQueue) cellnet.Peer {
-
-	self := &socketAcceptor{
-		sessionMgr: newSessionManager(),
-		peerBase:   newPeerBase(evq),
-	}
-
-	return self
 }
