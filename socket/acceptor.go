@@ -46,22 +46,22 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 				break
 			}
 
-			// 处理连接进入独立线程, 防止accept无法响应
+			//处理连接进入独立线程, 防止accept无法响应
 			go func() {
 				ses := newSession(NewPacketStream(conn), self, self)
 
-				// 添加到管理器
+				//添加到管理器
 				self.sessionMgr.Add(ses)
 
-				// 断开后从管理器移除
-				// TODO: 这里可以再给外部一个回调，或者post一个事件
+				//断开后从管理器移除
+				//TODO: 这里可以再给外部一个回调，或者post一个事件
 				ses.OnClose = func() {
 					self.sessionMgr.Remove(ses)
 				}
 
 				log.Infof("#accepted(%s) sid: %d", self.name, ses.ID())
 
-				// 通知逻辑
+				//通知逻辑
 				self.Post(self, NewSessionEvent(Event_SessionAccepted, ses, nil))
 			}()
 		}
