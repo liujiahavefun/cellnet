@@ -27,7 +27,6 @@ func (self *peerBase) MaxPacketSize() int {
 }
 
 func newPeerBase(evq cellnet.EventQueue) *peerBase {
-
 	self := &peerBase{
 		EventDispatcher: cellnet.NewEventDispatcher(),
 		EventQueue:      evq,

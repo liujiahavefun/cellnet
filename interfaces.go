@@ -1,7 +1,12 @@
+/*
+* 本文件定义常用的接口
+*/
 package cellnet
 
+/*
+* 代表通信的一端
+*/
 type Peer interface {
-
 	// 开启
 	Start(address string) Peer
 
@@ -23,8 +28,10 @@ type Peer interface {
 	SessionManager
 }
 
+/*
+* 代表通信的一端，同时可以发起连接
+*/
 type Connector interface {
-
 	// 连接后的Session
 	DefaultSession() Session
 
@@ -42,4 +49,22 @@ type SessionManager interface {
 
 	// 连接数量
 	SessionCount() int
+}
+
+type Session interface {
+
+	// 发包
+	Send(interface{})
+
+	// 直接发送封包
+	RawSend(*Packet)
+
+	// 断开
+	Close()
+
+	// 标示ID
+	ID() int64
+
+	// 归属端
+	FromPeer() Peer
 }
