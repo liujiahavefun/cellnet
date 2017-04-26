@@ -7,6 +7,11 @@ import (
 	"github.com/davyxu/cellnet"
 )
 
+const (
+	TOTAL_TRY_COUNT = 100
+)
+
+//TODO: 用带Hash的map进行优化，sesIDAcc用Atomic int64类型
 type sessionMgr struct {
 	sesMap map[int64]cellnet.Session
 
@@ -14,26 +19,25 @@ type sessionMgr struct {
 	sesMapGuard sync.RWMutex
 }
 
-const totalTryCount = 100
+func newSessionManager() *sessionMgr {
+	return &sessionMgr{
+		sesMap: make(map[int64]cellnet.Session),
+	}
+}
 
 func (self *sessionMgr) Add(ses cellnet.Session) {
-
 	self.sesMapGuard.Lock()
 	defer self.sesMapGuard.Unlock()
 
-	var tryCount int = totalTryCount
-
+	var tryCount int = TOTAL_TRY_COUNT
 	var id int64
 
-	// id翻越处理
+	//id翻越处理
 	for tryCount > 0 {
-
 		id = atomic.AddInt64(&self.sesIDAcc, 1)
-
 		if _, ok := self.sesMap[id]; !ok {
 			break
 		}
-
 		tryCount--
 	}
 
@@ -42,11 +46,8 @@ func (self *sessionMgr) Add(ses cellnet.Session) {
 	}
 
 	ltvses := ses.(*ltvSession)
-
 	ltvses.id = id
-
 	self.sesMap[id] = ses
-
 }
 
 func (self *sessionMgr) Remove(ses cellnet.Session) {
@@ -55,7 +56,7 @@ func (self *sessionMgr) Remove(ses cellnet.Session) {
 	self.sesMapGuard.Unlock()
 }
 
-// 获得一个连接
+//根据ID获得一个session
 func (self *sessionMgr) GetSession(id int64) cellnet.Session {
 	self.sesMapGuard.RLock()
 	defer self.sesMapGuard.RUnlock()
@@ -68,6 +69,7 @@ func (self *sessionMgr) GetSession(id int64) cellnet.Session {
 	return nil
 }
 
+//遍历访问所有的session
 func (self *sessionMgr) VisitSession(callback func(cellnet.Session) bool) {
 	self.sesMapGuard.RLock()
 	defer self.sesMapGuard.RUnlock()
@@ -77,18 +79,12 @@ func (self *sessionMgr) VisitSession(callback func(cellnet.Session) bool) {
 			break
 		}
 	}
-
 }
 
 func (self *sessionMgr) SessionCount() int {
+	//这里加读锁好还是写锁好？
 	self.sesMapGuard.Lock()
 	defer self.sesMapGuard.Unlock()
 
 	return len(self.sesMap)
-}
-
-func newSessionManager() *sessionMgr {
-	return &sessionMgr{
-		sesMap: make(map[int64]cellnet.Session),
-	}
 }
