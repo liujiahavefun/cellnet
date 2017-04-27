@@ -7,7 +7,7 @@ import (
 	"github.com/davyxu/cellnet/proto/gamedef"
 )
 
-type socketAcceptor struct {
+type TcpServer struct {
 	*peerBase
 	*sessionMgr
 
@@ -16,7 +16,7 @@ type socketAcceptor struct {
 }
 
 func NewAcceptor(evq cellnet.EventQueue) cellnet.Peer {
-	self := &socketAcceptor{
+	self := &TcpServer{
 		sessionMgr: newSessionManager(),
 		peerBase:   newPeerBase(evq),
 	}
@@ -24,7 +24,7 @@ func NewAcceptor(evq cellnet.EventQueue) cellnet.Peer {
 	return self
 }
 
-func (self *socketAcceptor) Start(address string) cellnet.Peer {
+func (self *TcpServer) Start(address string) cellnet.Peer {
 	ln, err := net.Listen("tcp", address)
 	self.listener = ln
 	if err != nil {
@@ -48,21 +48,21 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 
 			//处理连接进入独立线程, 防止accept无法响应
 			go func() {
-				ses := newSession(NewPacketStream(conn), self, self)
+				session := newSession(NewPacketStream(conn), self, self)
 
 				//添加到管理器
-				self.sessionMgr.Add(ses)
+				self.sessionMgr.Add(session)
 
 				//断开后从管理器移除
 				//TODO: 这里可以再给外部一个回调，或者post一个事件
-				ses.OnClose = func() {
-					self.sessionMgr.Remove(ses)
+				session.OnClose = func() {
+					self.sessionMgr.Remove(session)
 				}
 
-				log.Infof("#accepted(%s) sid: %d", self.name, ses.ID())
+				log.Infof("#accepted(%s) sid: %d", self.name, session.ID())
 
 				//通知逻辑
-				self.Post(self, NewSessionEvent(Event_SessionAccepted, ses, nil))
+				self.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
 			}()
 		}
 	}()
@@ -70,7 +70,7 @@ func (self *socketAcceptor) Start(address string) cellnet.Peer {
 	return self
 }
 
-func (self *socketAcceptor) Stop() {
+func (self *TcpServer) Stop() {
 	if !self.running {
 		return
 	}
