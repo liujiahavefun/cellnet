@@ -22,7 +22,7 @@ type RegisterMessageContext struct {
 func RegisterMessage(evd cellnet.EventDispatcher, msgName string, userHandler func(interface{}, cellnet.Session)) *RegisterMessageContext {
 	msgMeta := cellnet.MessageMetaByName(msgName)
 	if msgMeta == nil {
-		log.Errorf("message register failed, %s", msgName)
+		logErrorf("message register failed, %s", msgName)
 		return nil
 	}
 
@@ -30,7 +30,7 @@ func RegisterMessage(evd cellnet.EventDispatcher, msgName string, userHandler fu
 		if ev, ok := data.(*SessionEvent); ok {
 			rawMsg, err := cellnet.ParsePacket(ev.Packet, msgMeta.Type)
 			if err != nil {
-				log.Errorf("unmarshaling error: %v, raw: %v", err, ev.Packet)
+				logErrorf("unmarshaling error: %v, raw: %v", err, ev.Packet)
 				return
 			}
 

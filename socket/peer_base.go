@@ -2,7 +2,7 @@ package socket
 
 import "github.com/davyxu/cellnet"
 
-// Peer间的共享数据
+//Peer间的共享数据
 type peerBase struct {
 	cellnet.EventDispatcher
 	cellnet.EventQueue

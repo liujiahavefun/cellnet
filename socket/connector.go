@@ -8,6 +8,10 @@ import (
 	"github.com/davyxu/cellnet/proto/gamedef"
 )
 
+const (
+	DEFAULT_CONNECT_RETRY_TIMES = 3
+)
+
 type socketConnector struct {
 	*peerBase
 	*sessionMgr
@@ -29,10 +33,6 @@ type socketConnector struct {
 
 	defaultSes cellnet.Session
 }
-
-const (
-	DEFAULT_CONNECT_RETRY_TIMES = 3
-)
 
 func NewConnector(evq cellnet.EventQueue) cellnet.Peer {
 	self := &socketConnector{
@@ -70,11 +70,11 @@ func (self *socketConnector) connect(address string) {
 		conn, err := net.Dial("tcp", address)
 		if err != nil {
 			if self.tryConnTimes <= DEFAULT_CONNECT_RETRY_TIMES {
-				log.Errorf("#connect failed(%s) %v", self.name, err.Error())
+				logErrorf("#connect failed(%s) %v", self.name, err.Error())
 			}
 
 			if self.tryConnTimes == DEFAULT_CONNECT_RETRY_TIMES {
-				log.Errorf("(%s) continue reconnecting, but mute log", self.name)
+				logErrorf("(%s) continue reconnecting, but mute log", self.name)
 			}
 
 			//没重连就退出
@@ -100,7 +100,7 @@ func (self *socketConnector) connect(address string) {
 		self.sessionMgr.Add(ses)
 		self.defaultSes = ses
 
-		log.Infof("#connected(%s) %s sid: %d", self.name, address, ses.id)
+		logInfof("#connected(%s) %s sid: %d", self.name, address, ses.id)
 
 		//内部断开回调
 		ses.OnClose = func() {

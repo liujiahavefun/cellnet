@@ -42,7 +42,7 @@ func (self *sessionMgr) Add(ses cellnet.Session) {
 	}
 
 	if tryCount == 0 {
-		log.Warnln("sessionID override!", id)
+		logWarningf("sessionID override! %v", id)
 	}
 
 	ltvses := ses.(*tcpClientSession)
@@ -52,7 +52,7 @@ func (self *sessionMgr) Add(ses cellnet.Session) {
 
 func (self *sessionMgr) Remove(ses cellnet.Session) {
 	self.sesMapGuard.Lock()
-	delete(self.sesMap, ses.ID())
+	delete(self.sesMap, ses.GetID())
 	self.sesMapGuard.Unlock()
 }
 

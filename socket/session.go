@@ -12,9 +12,9 @@ type tcpClientSession struct {
 
 	fromPeer cellnet.Peer
 
-	endSync sync.WaitGroup
+	finish sync.WaitGroup  //session结束时等待读写线程退出
 
-	needNotifyWrite bool // 是否需要通知写线程关闭
+	needNotifyWrite bool //是否需要通知写线程关闭
 
 	stream *ltvStream
 
@@ -31,34 +31,32 @@ func newSession(stream *ltvStream, eq cellnet.EventQueue, peer cellnet.Peer) *tc
 		sendList:        NewPacketList(),
 	}
 
-	// 使用peer的统一设置
+	//使用peer的统一设置
 	self.stream.maxPacketSize = peer.MaxPacketSize()
 
-	// 布置接收和发送2个任务
-	// bug fix感谢viwii提供的线索
-	self.endSync.Add(2)
+	//布置接收和发送2个任务
+	self.finish.Add(2)
 
 	go func() {
-
 		// 等待2个任务结束
-		self.endSync.Wait()
+		self.finish.Wait()
 
-		// 在这里断开session与逻辑的所有关系
+		//在这里断开session与逻辑的所有关系
 		if self.OnClose != nil {
 			self.OnClose()
 		}
 	}()
 
-	// 接收线程
+	//接收线程
 	go self.recvThread(eq)
 
-	// 发送线程
+	//发送线程
 	go self.sendThread()
 
 	return self
 }
 
-func (self *tcpClientSession) ID() int64 {
+func (self *tcpClientSession) GetID() int64 {
 	return self.id
 }
 
@@ -67,20 +65,17 @@ func (self *tcpClientSession) FromPeer() cellnet.Peer {
 }
 
 func (self *tcpClientSession) Close() {
+	//通过放入sendList一个Msg Id为0的消息，使其退出
 	self.sendList.Add(&cellnet.Packet{})
 }
 
 func (self *tcpClientSession) Send(data interface{}) {
-
 	pkt, _ := cellnet.BuildPacket(data)
-
 	msgLog("send", self, pkt)
-
 	self.RawSend(pkt)
 }
 
 func (self *tcpClientSession) RawSend(pkt *cellnet.Packet) {
-
 	if pkt != nil {
 		self.sendList.Add(pkt)
 	}
@@ -135,7 +130,7 @@ EXIT_SEND_LOOP:
 	self.stream.Close()
 
 	//通知发送线程退出
-	self.endSync.Done()
+	self.finish.Done()
 }
 
 //接收线程
@@ -170,5 +165,5 @@ func (self *tcpClientSession) recvThread(eq cellnet.EventQueue) {
 	}
 
 	//通知接收线程退出
-	self.endSync.Done()
+	self.finish.Done()
 }

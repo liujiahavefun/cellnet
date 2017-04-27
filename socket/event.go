@@ -15,7 +15,7 @@ var (
 	Event_SessionConnectFailed = uint32(cellnet.MessageMetaByName("gamedef.SessionConnectFailed").ID)
 )
 
-// 会话事件
+//会话事件
 type SessionEvent struct {
 	*cellnet.Packet
 	Ses cellnet.Session
@@ -33,12 +33,9 @@ func NewSessionEvent(msgid uint32, s cellnet.Session, data []byte) *SessionEvent
 }
 
 func newSessionEvent(msgid uint32, s cellnet.Session, msg interface{}) *SessionEvent {
-
 	pkt, _ := cellnet.BuildPacket(msg)
-
 	return &SessionEvent{
 		Packet: pkt,
 		Ses:    s,
 	}
-
 }

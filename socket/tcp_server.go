@@ -28,20 +28,19 @@ func (self *TcpServer) Start(address string) cellnet.Peer {
 	ln, err := net.Listen("tcp", address)
 	self.listener = ln
 	if err != nil {
-
-		log.Errorf("#listen failed(%s) %v", self.name, err.Error())
+		logErrorf("#listen failed(%s) %v", self.name, err.Error())
 		return self
 	}
 
 	self.running = true
-	log.Infof("#listen(%s) %s ", self.name, address)
+	logInfof("#listen(%s) %s ", self.name, address)
 
 	// 接受线程
 	go func() {
 		for self.running {
 			conn, err := ln.Accept()
 			if err != nil {
-				log.Errorf("#accept failed(%s) %v", self.name, err.Error())
+				logErrorf("#accept failed(%s) %v", self.name, err.Error())
 				self.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &gamedef.SessionAcceptFailed{Reason: err.Error()}))
 				break
 			}
@@ -59,7 +58,7 @@ func (self *TcpServer) Start(address string) cellnet.Peer {
 					self.sessionMgr.Remove(session)
 				}
 
-				log.Infof("#accepted(%s) sid: %d", self.name, session.ID())
+				logInfof("#accepted(%s) sid: %d", self.name, session.GetID())
 
 				//通知逻辑
 				self.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))

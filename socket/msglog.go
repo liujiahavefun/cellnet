@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/davyxu/cellnet"
-
 	"github.com/golang/protobuf/proto"
 )
 
@@ -21,7 +20,7 @@ func (self *MessageLogInfo) PeerName() string {
 }
 
 func (self *MessageLogInfo) SessionID() int64 {
-	return self.ses.ID()
+	return self.ses.GetID()
 }
 
 func (self *MessageLogInfo) MsgName() string {
@@ -76,11 +75,8 @@ func msgLog(dir string, ses cellnet.Session, pkt *cellnet.Packet) {
 	}
 
 	if msgLogHook == nil || (msgLogHook != nil && msgLogHook(info)) {
-
-		log.Debugf("#%s(%s) sid: %d %s size: %d | %s", info.Dir, info.PeerName(), info.SessionID(), info.MsgName(), info.MsgSize(), info.MsgString())
-
+		logDebugf("#%s(%s) sid: %d %s size: %d | %s", info.Dir, info.PeerName(), info.SessionID(), info.MsgName(), info.MsgSize(), info.MsgString())
 	}
-
 }
 
 var msgLogHook func(*MessageLogInfo) bool
@@ -95,10 +91,9 @@ func BlockMessageLog(msgName string) {
 	meta := cellnet.MessageMetaByName(msgName)
 
 	if meta == nil {
-		log.Errorf("msg log block not found: %s", msgName)
+		logErrorf("msg log block not found: %s", msgName)
 		return
 	}
 
 	msgMetaByID[meta.ID] = meta
-
 }
