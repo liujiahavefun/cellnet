@@ -19,7 +19,7 @@ func server() {
 
 	queue := cellnet.NewEventQueue()
 
-	p := socket.NewAcceptor(queue)
+	p := socket.NewTcpServer(queue)
 	p.SetName("server")
 	p.Start("127.0.0.1:9201")
 

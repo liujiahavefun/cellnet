@@ -17,7 +17,7 @@ var signal *test.SignalTester
 func runServer() {
 	queue := cellnet.NewEventQueue()
 
-	p := socket.NewAcceptor(queue).Start("127.0.0.1:7201")
+	p := socket.NewTcpServer(queue).Start("127.0.0.1:7201")
 
 	socket.RegisterMessage(p, "gamedef.TestEchoACK", func(content interface{}, ses cellnet.Session) {
 		msg := content.(*gamedef.TestEchoACK)

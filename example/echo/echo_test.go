@@ -18,7 +18,7 @@ func server() {
 
 	queue := cellnet.NewEventQueue()
 
-	evd := socket.NewAcceptor(queue).Start("127.0.0.1:7201")
+	evd := socket.NewTcpServer(queue).Start("127.0.0.1:7201")
 
 	socket.RegisterMessage(evd, "gamedef.TestEchoACK", func(content interface{}, ses cellnet.Session) {
 		msg := content.(*gamedef.TestEchoACK)

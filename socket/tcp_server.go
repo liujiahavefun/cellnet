@@ -15,7 +15,7 @@ type TcpServer struct {
 	running bool //TODO: 用atomic代替
 }
 
-func NewAcceptor(evq cellnet.EventQueue) cellnet.Peer {
+func NewTcpServer(evq cellnet.EventQueue) cellnet.Peer {
 	self := &TcpServer{
 		sessionMgr: newSessionManager(),
 		peerBase:   newPeerBase(evq),
