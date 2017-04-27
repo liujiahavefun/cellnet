@@ -9,7 +9,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/davyxu/cellnet"
+	"cellnet"
 )
 
 const (

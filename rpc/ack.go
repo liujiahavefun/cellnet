@@ -1,9 +1,9 @@
 package rpc
 
 import (
-	"github.com/davyxu/cellnet"
-	"github.com/davyxu/cellnet/proto/gamedef"
-	"github.com/davyxu/cellnet/socket"
+	"cellnet"
+	"cellnet/proto/gamedef"
+	"cellnet/socket"
 )
 
 type Response interface {

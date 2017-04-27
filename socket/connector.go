@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/davyxu/cellnet"
-	"github.com/davyxu/cellnet/proto/gamedef"
+	"cellnet"
+	"cellnet/proto/gamedef"
 )
 
 const (

@@ -1,7 +1,7 @@
 package socket
 
 import (
-	"github.com/davyxu/cellnet"
+	"cellnet"
 )
 
 func MessageRegistedCount(evd cellnet.EventDispatcher, msgName string) int {

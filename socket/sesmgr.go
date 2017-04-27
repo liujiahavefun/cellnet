@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/davyxu/cellnet"
+	"cellnet"
 )
 
 const (

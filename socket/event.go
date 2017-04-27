@@ -3,8 +3,8 @@ package socket
 import (
 	"fmt"
 
-	"github.com/davyxu/cellnet"
-	_ "github.com/davyxu/cellnet/proto/gamedef"
+	"cellnet"
+	_ "cellnet/proto/gamedef"
 )
 
 var (

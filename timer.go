@@ -14,7 +14,6 @@ func (self *Timer) Stop() {
 }
 
 func NewTimer(eq EventQueue, dur time.Duration, callback func(*Timer)) *Timer {
-
 	self := &Timer{
 		tick: time.NewTicker(dur),
 		done: make(chan struct{}),

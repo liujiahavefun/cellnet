@@ -1,6 +1,6 @@
 package socket
 
-import "github.com/davyxu/cellnet"
+import "cellnet"
 
 //Peer间的共享数据
 type peerBase struct {

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davyxu/cellnet"
-	"github.com/davyxu/cellnet/example"
+	"cellnet"
+	"cellnet/example"
 	"github.com/davyxu/golog"
 )
 

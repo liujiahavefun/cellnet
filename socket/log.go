@@ -13,6 +13,10 @@ var (
 	gLog *logger.Logger
 )
 
+func init() {
+	initLogger()
+}
+
 func initLogger() {
 	conf := logger.NewLogConfig(LOG_CONFIG_FILE)
 	err := conf.LoadConfig()

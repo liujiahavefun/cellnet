@@ -3,8 +3,8 @@ package socket
 import (
 	"sync"
 
-	"github.com/davyxu/cellnet"
-	"github.com/davyxu/cellnet/proto/gamedef"
+	"cellnet"
+	"cellnet/proto/gamedef"
 )
 
 type tcpClientSession struct {

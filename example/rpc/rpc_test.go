@@ -3,11 +3,11 @@ package rpc
 import (
 	"testing"
 
-	"github.com/davyxu/cellnet"
-	"github.com/davyxu/cellnet/example"
-	"github.com/davyxu/cellnet/proto/gamedef"
-	"github.com/davyxu/cellnet/rpc"
-	"github.com/davyxu/cellnet/socket"
+	"cellnet"
+	"cellnet/example"
+	"cellnet/proto/gamedef"
+	"cellnet/rpc"
+	"cellnet/socket"
 	"github.com/davyxu/golog"
 )
 

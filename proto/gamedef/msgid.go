@@ -5,7 +5,7 @@
 package gamedef
 
 import (
-	"github.com/davyxu/cellnet"
+	"cellnet"
 )
 
 func init() {
