@@ -41,10 +41,10 @@ func TestDispatcherVisitRemoveExceptMid(t *testing.T) {
 	dispatcher.VisitCallback(func(id uint32, ctx *CallbackContext) VisitOperation {
 
 		if ctx.Tag != "B" {
-			return VisitOperation_Remove
+			return VISIT_OPERATION_REMOVE
 		}
 
-		return VisitOperation_Continue
+		return VISIT_OPERATION_CONTINUE
 
 	})
 
@@ -67,11 +67,10 @@ func TestDispatcherVisitRemoveExceptHead(t *testing.T) {
 	dispatcher.VisitCallback(func(id uint32, ctx *CallbackContext) VisitOperation {
 
 		if ctx.Tag != "A" {
-			return VisitOperation_Remove
+			return VISIT_OPERATION_REMOVE
 		}
 
-		return VisitOperation_Continue
-
+		return VISIT_OPERATION_CONTINUE
 	})
 
 	dispatcher.CallData(&idmaker{})
@@ -87,17 +86,14 @@ func TestDispatcherVisitRemoveExceptHead(t *testing.T) {
 }
 
 func TestDispatcherVisitRemoveExceptTail(t *testing.T) {
-
 	dispatcher := makeDispatcher()
 
 	dispatcher.VisitCallback(func(id uint32, ctx *CallbackContext) VisitOperation {
-
 		if ctx.Tag != "C" {
-			return VisitOperation_Remove
+			return VISIT_OPERATION_REMOVE
 		}
 
-		return VisitOperation_Continue
-
+		return VISIT_OPERATION_CONTINUE
 	})
 
 	dispatcher.CallData(&idmaker{})
@@ -109,5 +105,4 @@ func TestDispatcherVisitRemoveExceptTail(t *testing.T) {
 		t.Log("remove except c failed")
 		t.FailNow()
 	}
-
 }

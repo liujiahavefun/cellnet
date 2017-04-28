@@ -8,6 +8,8 @@ import (
 )
 
 type tcpClientSession struct {
+	*peerBase
+
 	id int64
 
 	fromPeer cellnet.Peer

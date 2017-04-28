@@ -54,7 +54,7 @@ func TestDelay(t *testing.T) {
 
 	log.Debugln("delay 1 sec begin")
 
-	queue.DelayPost(nil, time.Second, func() {
+	queue.PostDelayed(nil, time.Second, func() {
 
 		log.Debugln("delay done")
 		signal.Done(1)

@@ -10,22 +10,22 @@ type EventQueue interface {
 
 	StopLoop(result int)
 
-	// 等待退出
+	//等待退出
 	Wait() int
 
-	// 投递事件, 通过队列到达消费者端
+	//投递事件, 通过队列到达消费者端
 	Post(evd EventDispatcher, data interface{})
 
-	// 延时投递
-	DelayPost(evd EventDispatcher, dur time.Duration, data interface{})
+	//延时投递
+	PostDelayed(evd EventDispatcher, dur time.Duration, data interface{})
 }
 
 type queueData struct {
-	evd  EventDispatcher
+	dispatcher  EventDispatcher
 	data interface{}
 }
 
-type evQueue struct {
+type eventQueue struct {
 	queue chan queueData
 
 	exitSignal chan int
@@ -33,33 +33,50 @@ type evQueue struct {
 	capturePanic bool
 }
 
-// 派发到队列
-func (self *evQueue) Post(evd EventDispatcher, data interface{}) {
+func NewEventQueue() EventQueue {
+	self := &eventQueue{
+		queue:      make(chan queueData, 10),
+		exitSignal: make(chan int),
+	}
 
-	self.queue <- queueData{evd: evd, data: data}
+	return self
 }
 
-func (self *evQueue) DelayPost(evd EventDispatcher, dur time.Duration, data interface{}) {
+func (self *eventQueue) StartLoop() {
 	go func() {
-
-		time.AfterFunc(dur, func() {
-
-			self.Post(evd, data)
-		})
-
+		for v := range self.queue {
+			self.protectedCall(v.dispatcher, v.data)
+		}
 	}()
 }
 
-func (self *evQueue) protectedCall(evd EventDispatcher, data interface{}) {
+func (self *eventQueue) StopLoop(result int) {
+	self.exitSignal <- result
+}
 
+func (self *eventQueue) Wait() int {
+	return <-self.exitSignal
+}
+
+func (self *eventQueue) Post(evd EventDispatcher, data interface{}) {
+	self.queue <- queueData{dispatcher: evd, data: data}
+}
+
+func (self *eventQueue) PostDelayed(evd EventDispatcher, delayed time.Duration, data interface{}) {
+	go func() {
+		time.AfterFunc(delayed, func() {
+			self.Post(evd, data)
+		})
+	}()
+}
+
+func (self *eventQueue) protectedCall(evd EventDispatcher, data interface{}) {
 	if self.capturePanic {
 		defer func() {
-
 			if err := recover(); err != nil {
 				log.Fatalln(err)
 				debug.PrintStack()
 			}
-
 		}()
 	}
 
@@ -68,32 +85,4 @@ func (self *evQueue) protectedCall(evd EventDispatcher, data interface{}) {
 	} else if f, ok := data.(func()); ok {
 		f()
 	}
-
-}
-
-func (self *evQueue) StartLoop() {
-
-	go func() {
-		for v := range self.queue {
-			self.protectedCall(v.evd, v.data)
-		}
-	}()
-}
-
-func (self *evQueue) StopLoop(result int) {
-	self.exitSignal <- result
-}
-
-func (self *evQueue) Wait() int {
-	return <-self.exitSignal
-}
-
-func NewEventQueue() EventQueue {
-	self := &evQueue{
-		queue:      make(chan queueData, 10),
-		exitSignal: make(chan int),
-	}
-
-	return self
-
 }

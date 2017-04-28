@@ -24,6 +24,9 @@ type onMessageFunc func(Message, Connection)
 type onScheduleFunc func(time.Time, interface{})
 */
 
+//某个peer连接过来并建立了session
+type onSessionConnectedFunc func(session cellnet.Session)
+
 //出现错误时回调，无论是server还是client
 type onErrorFunc func(peer cellnet.Peer, err error)
 

@@ -9,7 +9,6 @@ import (
 )
 
 func init() {
-
 	// core.proto
 	cellnet.RegisterMessageMeta("gamedef.SessionAccepted", (*SessionAccepted)(nil), 4151444293)
 	cellnet.RegisterMessageMeta("gamedef.SessionConnected", (*SessionConnected)(nil), 459632229)
@@ -19,5 +18,4 @@ func init() {
 	cellnet.RegisterMessageMeta("gamedef.RemoteCallREQ", (*RemoteCallREQ)(nil), 1469566342)
 	cellnet.RegisterMessageMeta("gamedef.RemoteCallACK", (*RemoteCallACK)(nil), 1020080612)
 	cellnet.RegisterMessageMeta("gamedef.TestEchoACK", (*TestEchoACK)(nil), 1899977859)
-
 }

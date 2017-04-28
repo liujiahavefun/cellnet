@@ -18,13 +18,13 @@ type Peer interface {
 
 	// 事件
 	EventDispatcher
-
-	// 连接管理
-	SessionManager
 }
 
 type Server interface {
 	Peer
+
+	// 连接管理
+	SessionManager
 
 	//启动服务，侦听接口
 	Start(address string) Server
@@ -55,18 +55,9 @@ type Connector interface {
 	SetAutoReconnectSec(sec int)
 }
 
-type SessionManager interface {
-	//获取一个连接
-	GetSession(int64) Session
-
-	//遍历连接
-	VisitSession(func(Session) bool)
-
-	//连接数量
-	SessionCount() int
-}
-
 type Session interface {
+	Peer
+
 	//发包
 	Send(interface{})
 
@@ -81,4 +72,15 @@ type Session interface {
 
 	//归属端
 	FromPeer() Peer
+}
+
+type SessionManager interface {
+	//获取一个连接
+	GetSession(int64) Session
+
+	//遍历连接
+	VisitSession(func(Session) bool)
+
+	//连接数量
+	SessionCount() int
 }
