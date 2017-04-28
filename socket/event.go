@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	Event_SessionConnected     = uint32(cellnet.MessageMetaByName("gamedef.SessionConnected").ID)
-	Event_SessionClosed        = uint32(cellnet.MessageMetaByName("gamedef.SessionClosed").ID)
 	Event_SessionAccepted      = uint32(cellnet.MessageMetaByName("gamedef.SessionAccepted").ID)
 	Event_SessionAcceptFailed  = uint32(cellnet.MessageMetaByName("gamedef.SessionAcceptFailed").ID)
+	Event_SessionConnected     = uint32(cellnet.MessageMetaByName("gamedef.SessionConnected").ID)
+	Event_SessionClosed        = uint32(cellnet.MessageMetaByName("gamedef.SessionClosed").ID)
 	Event_SessionConnectFailed = uint32(cellnet.MessageMetaByName("gamedef.SessionConnectFailed").ID)
 )
 

@@ -11,11 +11,12 @@ type TcpServer struct {
 	*peerBase
 	*sessionMgr
 
-	listener net.Listener
+	address string
 	running bool //TODO: 用atomic代替
+	listener net.Listener
 }
 
-func NewTcpServer(evq cellnet.EventQueue) cellnet.Peer {
+func NewTcpServer(evq cellnet.EventQueue) cellnet.Server {
 	self := &TcpServer{
 		sessionMgr: newSessionManager(),
 		peerBase:   newPeerBase(evq),
@@ -24,7 +25,7 @@ func NewTcpServer(evq cellnet.EventQueue) cellnet.Peer {
 	return self
 }
 
-func (self *TcpServer) Start(address string) cellnet.Peer {
+func (self *TcpServer) Start(address string) cellnet.Server {
 	ln, err := net.Listen("tcp", address)
 	self.listener = ln
 	if err != nil {
@@ -32,6 +33,7 @@ func (self *TcpServer) Start(address string) cellnet.Peer {
 		return self
 	}
 
+	self.address = address
 	self.running = true
 	logInfof("#listen(%s) %s ", self.name, address)
 
@@ -76,4 +78,12 @@ func (self *TcpServer) Stop() {
 
 	self.running = false
 	self.listener.Close()
+}
+
+func (self *TcpServer) IsRunning() bool {
+	return self.running
+}
+
+func (self *TcpServer) GetAddress() string {
+	return self.address
 }

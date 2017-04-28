@@ -12,7 +12,7 @@ const (
 	DEFAULT_CONNECT_RETRY_TIMES = 3
 )
 
-type socketConnector struct {
+type TcpConnector struct {
 	*peerBase
 	*sessionMgr
 
@@ -34,8 +34,8 @@ type socketConnector struct {
 	defaultSes cellnet.Session
 }
 
-func NewConnector(evq cellnet.EventQueue) cellnet.Peer {
-	self := &socketConnector{
+func NewConnector(evq cellnet.EventQueue) cellnet.Connector {
+	self := &TcpConnector{
 		sessionMgr:  newSessionManager(),
 		peerBase:    newPeerBase(evq),
 		closeSignal: make(chan bool),
@@ -44,13 +44,8 @@ func NewConnector(evq cellnet.EventQueue) cellnet.Peer {
 	return self
 }
 
-//设置自动重连间隔, 秒为单位，0表示不重连
-func (self *socketConnector) SetAutoReconnectSec(sec int) {
-	self.autoReconnectSec = sec
-}
-
 //启动，去连接
-func (self *socketConnector) Start(address string) cellnet.Peer {
+func (self *TcpConnector) Start(address string) cellnet.Connector {
 	if self.working {
 		return self
 	}
@@ -60,7 +55,7 @@ func (self *socketConnector) Start(address string) cellnet.Peer {
 }
 
 //连接，注意重连是会阻塞的，并且连上之后也是阻塞的，所以这个函数要在单独的goroutine里被调用
-func (self *socketConnector) connect(address string) {
+func (self *TcpConnector) connect(address string) {
 	self.working = true
 
 	for {
@@ -131,13 +126,18 @@ func (self *socketConnector) connect(address string) {
 	self.working = false
 }
 
-func (self *socketConnector) Stop() {
+func (self *TcpConnector) Stop() {
 	if self.conn != nil {
 		//这个调用会导致session的Close，从而调用了我们设置的OnClose回调，最终self.closeSignal收到信号，关闭
 		self.conn.Close()
 	}
 }
 
-func (self *socketConnector) DefaultSession() cellnet.Session {
+func (self *TcpConnector) DefaultSession() cellnet.Session {
 	return self.defaultSes
+}
+
+//设置自动重连间隔, 秒为单位，0表示不重连
+func (self *TcpConnector) SetAutoReconnectSec(sec int) {
+	self.autoReconnectSec = sec
 }

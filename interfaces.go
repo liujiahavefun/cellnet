@@ -3,21 +3,16 @@
 */
 package cellnet
 
+
 /*
 * 代表通信的一端
 */
 type Peer interface {
-	// 开启
-	Start(address string) Peer
-
-	// 关闭
-	Stop()
-
 	// 名字
 	SetName(string)
 	Name() string
 
-	// Session最大包大小, 超过这个数字, 接收视为错误, 断开连接
+	//Session最大包大小, 超过这个数字, 接收视为错误, 断开连接
 	SetMaxPacketSize(size int)
 	MaxPacketSize() int
 
@@ -28,10 +23,31 @@ type Peer interface {
 	SessionManager
 }
 
-/*
-* 代表通信的一端，同时可以发起连接
-*/
+type Server interface {
+	Peer
+
+	//启动服务，侦听接口
+	Start(address string) Server
+
+	//停止
+	Stop()
+
+	//是否在运行
+	IsRunning() bool
+
+	//监听的地址like tcp:127.0.0.1:9100
+	GetAddress() string
+}
+
 type Connector interface {
+	Peer
+
+	//启动，连接server
+	Start(address string) Connector
+
+	//停止
+	Stop()
+
 	// 连接后的Session
 	DefaultSession() Session
 
