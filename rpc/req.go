@@ -57,25 +57,18 @@ func removeCall(id int64) {
 	reqGuard.Unlock()
 }
 
-// 从peer获取rpc使用的session
+//从peer获取rpc使用的session
 func getPeerSession(p interface{}) (cellnet.Session, cellnet.EventDispatcher, error) {
-
 	var ses cellnet.Session
-
 	switch p.(type) {
-	case cellnet.Peer:
-		if connPeer, ok := p.(interface {
-			DefaultSession() cellnet.Session
-		}); ok {
-
-			ses = connPeer.DefaultSession()
-
-		} else {
-
-			return nil, nil, errInvalidPeerSession
-		}
-	case cellnet.Session:
-		ses = p.(cellnet.Session)
+		case cellnet.Peer:
+			if connPeer, ok := p.(interface {Session() cellnet.Session}); ok {
+				ses = connPeer.Session()
+			} else {
+				return nil, nil, errInvalidPeerSession
+			}
+		case cellnet.Session:
+			ses = p.(cellnet.Session)
 	}
 
 	if ses == nil {

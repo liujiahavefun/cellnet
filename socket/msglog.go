@@ -57,8 +57,12 @@ func (self *MessageLogInfo) MsgString() string {
 var EnableMessageLog bool = true
 
 func msgLog(dir string, ses cellnet.Session, pkt *cellnet.Packet) {
-
 	if !EnableMessageLog {
+		return
+	}
+
+	if pkt == nil {
+		fmt.Println("pkt is nill")
 		return
 	}
 

@@ -16,6 +16,9 @@ type TcpConnector struct {
 	*peerBase
 	*sessionMgr
 
+	cellnet.EventDispatcher
+	evq cellnet.EventQueue
+
 	//底层的net.Conn
 	conn net.Conn
 
@@ -36,8 +39,10 @@ type TcpConnector struct {
 
 func NewConnector(evq cellnet.EventQueue) cellnet.Connector {
 	self := &TcpConnector{
+		peerBase:    newPeerBase(),
 		sessionMgr:  newSessionManager(),
-		peerBase:    newPeerBase(evq),
+		EventDispatcher: cellnet.NewEventDispatcher(),
+		evq:         evq,
 		closeSignal: make(chan bool),
 	}
 
@@ -74,7 +79,7 @@ func (self *TcpConnector) connect(address string) {
 
 			//没重连就退出
 			if self.autoReconnectSec == 0 {
-				self.Post(self, newSessionEvent(Event_SessionConnectFailed, nil, &gamedef.SessionConnectFailed{Reason: err.Error()}))
+				self.evq.Post(self, newSessionEvent(Event_SessionConnectFailed, nil, &gamedef.SessionConnectFailed{Reason: err.Error()}))
 				break
 			}
 
@@ -91,20 +96,34 @@ func (self *TcpConnector) connect(address string) {
 		self.conn = conn
 
 		//创建Session
-		ses := newSession(NewPacketStream(conn), self, self)
+		ses := newClientSession(conn, self)
 		self.sessionMgr.Add(ses)
 		self.defaultSes = ses
 
 		logInfof("#connected(%s) %s sid: %d", self.name, address, ses.id)
 
-		//内部断开回调
-		ses.OnClose = func() {
-			self.sessionMgr.Remove(ses)
+		//设置回调
+		ses.onSessionClosedFunc = func(session cellnet.Session) {
+			self.sessionMgr.Remove(session)
 			self.closeSignal <- true
+
+			ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: ""})
+
+			//post断开事件
+			self.evq.Post(self, ev)
+		}
+		ses.onSessionErrorFunc = func(session cellnet.Session, err error) {
+
+		}
+		ses.onSessionRecvPacketFunc = func(session cellnet.Session, packet *cellnet.Packet) {
+			self.evq.Post(self, &SessionEvent{
+				Packet: packet,
+				Ses:    session,
+			})
 		}
 
 		// 抛出事件
-		self.Post(self, NewSessionEvent(Event_SessionConnected, ses, nil))
+		self.evq.Post(self, NewSessionEvent(Event_SessionConnected, ses, nil))
 
 		//等待连接关闭
 		if <-self.closeSignal {
@@ -133,7 +152,7 @@ func (self *TcpConnector) Stop() {
 	}
 }
 
-func (self *TcpConnector) DefaultSession() cellnet.Session {
+func (self *TcpConnector) Session() cellnet.Session {
 	return self.defaultSes
 }
 

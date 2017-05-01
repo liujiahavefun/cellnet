@@ -4,53 +4,41 @@ import (
 	"sync"
 
 	"cellnet"
-	"cellnet/proto/gamedef"
 )
 
-type tcpClientSession struct {
-	*peerBase
+type sessionBase struct {
+	myself cellnet.Peer
+	otherSide cellnet.Peer
 
 	id int64
-
-	fromPeer cellnet.Peer
-
 	finish sync.WaitGroup  //session结束时等待读写线程退出
-
 	needNotifyWrite bool //是否需要通知写线程关闭
-
 	stream *ltvStream
-
 	sendList *PacketList
 
-	OnClose func() // 关闭函数回调
+	//事件回调
+	onSessionClosedFunc OnSessionClosedFunc
+	onSessionErrorFunc OnSessionErrorFunc
+	onSessionRecvPacketFunc OnSessionRecvPacketFunc
 }
 
-func newSession(stream *ltvStream, eq cellnet.EventQueue, peer cellnet.Peer) *tcpClientSession {
-	self := &tcpClientSession{
+func newSessionBase(stream *ltvStream, myself cellnet.Peer, otherSide cellnet.Peer) *sessionBase {
+	self := &sessionBase{
 		stream:          stream,
-		fromPeer:        peer,
+		myself:        	 myself,
+		otherSide:       otherSide,
 		needNotifyWrite: true,
 		sendList:        NewPacketList(),
 	}
 
 	//使用peer的统一设置
-	self.stream.maxPacketSize = peer.MaxPacketSize()
+	self.stream.maxPacketSize = myself.MaxPacketSize()
 
 	//布置接收和发送2个任务
 	self.finish.Add(2)
 
-	go func() {
-		// 等待2个任务结束
-		self.finish.Wait()
-
-		//在这里断开session与逻辑的所有关系
-		if self.OnClose != nil {
-			self.OnClose()
-		}
-	}()
-
 	//接收线程
-	go self.recvThread(eq)
+	go self.recvThread()
 
 	//发送线程
 	go self.sendThread()
@@ -58,33 +46,56 @@ func newSession(stream *ltvStream, eq cellnet.EventQueue, peer cellnet.Peer) *tc
 	return self
 }
 
-func (self *tcpClientSession) GetID() int64 {
+func (self *sessionBase) SetID(id int64) {
+	self.id = id
+}
+
+func (self *sessionBase) GetID() int64 {
 	return self.id
 }
 
-func (self *tcpClientSession) FromPeer() cellnet.Peer {
-	return self.fromPeer
+func (self *sessionBase) FromPeer() cellnet.Peer {
+	return self.myself
 }
 
-func (self *tcpClientSession) Close() {
+func (self *sessionBase) GetMyselfPeer() cellnet.Peer {
+	return self.myself
+}
+
+func (self *sessionBase) GetOtherSidePeer() cellnet.Peer {
+	return self.otherSide
+}
+
+func (self *sessionBase) Close() {
 	//通过放入sendList一个Msg Id为0的消息，使其退出
 	self.sendList.Add(&cellnet.Packet{})
+
+	//TODO, 挪到Close()函数内
+	go func() {
+		//等待2个任务结束
+		self.finish.Wait()
+
+		//在这里断开session与逻辑的所有关系
+		if self.onSessionClosedFunc != nil {
+			self.onSessionClosedFunc(self)
+		}
+	}()
 }
 
-func (self *tcpClientSession) Send(data interface{}) {
+func (self *sessionBase) Send(data interface{}) {
 	pkt, _ := cellnet.BuildPacket(data)
 	msgLog("send", self, pkt)
 	self.RawSend(pkt)
 }
 
-func (self *tcpClientSession) RawSend(pkt *cellnet.Packet) {
+func (self *sessionBase) RawSend(pkt *cellnet.Packet) {
 	if pkt != nil {
 		self.sendList.Add(pkt)
 	}
 }
 
 //发送线程
-func (self *tcpClientSession) sendThread() {
+func (self *sessionBase) sendThread() {
 	var writeList []*cellnet.Packet
 
 	for {
@@ -125,7 +136,7 @@ func (self *tcpClientSession) sendThread() {
 	}
 
 EXIT_SEND_LOOP:
-	//不需要读线程再次通知写线程
+//不需要读线程再次通知写线程
 	self.needNotifyWrite = false
 
 	//关闭socket,触发读错误, 结束读循环
@@ -136,7 +147,7 @@ EXIT_SEND_LOOP:
 }
 
 //接收线程
-func (self *tcpClientSession) recvThread(eq cellnet.EventQueue) {
+func (self *sessionBase) recvThread() {
 	var err error
 	var pkt *cellnet.Packet
 
@@ -144,22 +155,30 @@ func (self *tcpClientSession) recvThread(eq cellnet.EventQueue) {
 		//从Socket读取封包
 		pkt, err = self.stream.Read()
 		if err != nil {
+			/*
 			ev := newSessionEvent(Event_SessionClosed, self, &gamedef.SessionClosed{Reason: err.Error()})
 			msgLog("recv", self, ev.Packet)
 
 			//post断开事件
 			eq.Post(self.fromPeer, ev)
+			*/
+			msgLog("recv", self, pkt)
+			self.onSessionErrorFunc(self, err)
 			break
 		}
 
-		// 消息日志要多损耗一次解析性能
+		//消息日志要多损耗一次解析性能
 		msgLog("recv", self, pkt)
 
-		// 逻辑封包
+		//逻辑封包
+		/*
 		eq.Post(self.fromPeer, &SessionEvent{
 			Packet: pkt,
 			Ses:    self,
 		})
+		*/
+
+		self.onSessionRecvPacketFunc(self, pkt)
 	}
 
 	if self.needNotifyWrite {

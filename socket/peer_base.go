@@ -1,20 +1,17 @@
 package socket
 
-import "cellnet"
-
 //Peer间的共享数据
 type peerBase struct {
-	cellnet.EventDispatcher
-	cellnet.EventQueue
+	//cellnet.EventDispatcher
+	//cellnet.EventQueue
 
 	name          string
+	address       string
 	maxPacketSize int
 }
 
-func newPeerBase(evq cellnet.EventQueue) *peerBase {
+func newPeerBase() *peerBase {
 	self := &peerBase{
-		EventDispatcher: cellnet.NewEventDispatcher(),
-		EventQueue:      evq,
 	}
 
 	return self

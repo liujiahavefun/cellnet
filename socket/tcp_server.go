@@ -5,11 +5,17 @@ import (
 
 	"cellnet"
 	"cellnet/proto/gamedef"
+	"fmt"
 )
 
 type TcpServer struct {
 	*peerBase
 	*sessionMgr
+
+	cellnet.EventDispatcher
+	evq cellnet.EventQueue
+
+	//sessionCallback *SessionCallback
 
 	address string
 	running bool //TODO: 用atomic代替
@@ -18,9 +24,18 @@ type TcpServer struct {
 
 func NewTcpServer(evq cellnet.EventQueue) cellnet.Server {
 	self := &TcpServer{
+		EventDispatcher: cellnet.NewEventDispatcher(),
+		evq: 		evq,
+		peerBase:   newPeerBase(),
 		sessionMgr: newSessionManager(),
-		peerBase:   newPeerBase(evq),
 	}
+
+	/*
+	self.sessionCallback = NewSessionCallback(self.onSessionConnectedFunc,
+											  self.onSessionClosedFunc,
+											  self.onSessionErrorFunc,
+											  self.onSessionRecvPacketFunc)
+	*/
 
 	return self
 }
@@ -42,28 +57,30 @@ func (self *TcpServer) Start(address string) cellnet.Server {
 		for self.running {
 			conn, err := ln.Accept()
 			if err != nil {
+				//TODO: onErrorFunc instead, 别随地胡逼抛事件
 				logErrorf("#accept failed(%s) %v", self.name, err.Error())
-				self.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &gamedef.SessionAcceptFailed{Reason: err.Error()}))
+				self.evq.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &gamedef.SessionAcceptFailed{Reason: err.Error()}))
 				break
 			}
 
 			//处理连接进入独立线程, 防止accept无法响应
 			go func() {
-				session := newSession(NewPacketStream(conn), self, self)
+				session := newServerSession(conn, self)
+
+				//断开后从管理器移除
+				//TODO: 这里可以再给外部一个回调，或者post一个事件
+				session.onSessionClosedFunc = self.onSessionClosedFunc
+				session.onSessionErrorFunc = self.onSessionErrorFunc
+				session.onSessionRecvPacketFunc = self.onSessionRecvPacketFunc
 
 				//添加到管理器
 				self.sessionMgr.Add(session)
 
-				//断开后从管理器移除
-				//TODO: 这里可以再给外部一个回调，或者post一个事件
-				session.OnClose = func() {
-					self.sessionMgr.Remove(session)
-				}
-
 				logInfof("#accepted(%s) sid: %d", self.name, session.GetID())
 
 				//通知逻辑
-				self.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
+				//self.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
+				self.onSessionConnectedFunc(session)
 			}()
 		}
 	}()
@@ -86,4 +103,40 @@ func (self *TcpServer) IsRunning() bool {
 
 func (self *TcpServer) GetAddress() string {
 	return self.address
+}
+
+func (self *TcpServer) onSessionConnectedFunc(session cellnet.Session) {
+	fmt.Println("liujia, tcp_server onSessionConnectedFunc: ", session)
+	self.evq.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
+}
+
+func (self *TcpServer) onSessionClosedFunc(session cellnet.Session) {
+	fmt.Println("liujia, tcp_server onSessionClosedFunc: ", session)
+	self.sessionMgr.Remove(session)
+
+	/*
+	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: err.Error()})
+	msgLog("recv", session, ev.Packet)
+
+	//post断开事件
+	self.evq.Post(self, ev)
+	*/
+}
+
+func (self *TcpServer) onSessionErrorFunc(session cellnet.Session, err error) {
+	fmt.Println("liujia, tcp_server onSessionErrorFunc: ", session, err)
+	//TODO: Event_SessionClosed to Event_SessionError
+	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: err.Error()})
+
+	//post断开事件
+	self.evq.Post(self, ev)
+}
+
+func (self *TcpServer) onSessionRecvPacketFunc(session cellnet.Session, packet *cellnet.Packet) {
+	fmt.Println("liujia, tcp_server onSessionRecvPacketFunc: ", session, packet)
+	msgLog("recv", session, packet)
+	self.evq.Post(self, &SessionEvent{
+		Packet: packet,
+		Ses:    session,
+	})
 }

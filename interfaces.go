@@ -3,27 +3,23 @@
 */
 package cellnet
 
-
-/*
-* 代表通信的一端
-*/
 type Peer interface {
-	// 名字
+	//名字
 	SetName(string)
 	Name() string
 
 	//Session最大包大小, 超过这个数字, 接收视为错误, 断开连接
 	SetMaxPacketSize(size int)
 	MaxPacketSize() int
-
-	// 事件
-	EventDispatcher
 }
 
 type Server interface {
 	Peer
 
-	// 连接管理
+	//事件
+	EventDispatcher
+
+	//连接管理
 	SessionManager
 
 	//启动服务，侦听接口
@@ -42,22 +38,23 @@ type Server interface {
 type Connector interface {
 	Peer
 
+	//事件
+	EventDispatcher
+
 	//启动，连接server
 	Start(address string) Connector
 
 	//停止
 	Stop()
 
-	// 连接后的Session
-	DefaultSession() Session
+	//连接后的Session
+	Session() Session
 
-	// 自动重连间隔, 0表示不重连, 默认不重连
+	//自动重连间隔, 0表示不重连, 默认不重连
 	SetAutoReconnectSec(sec int)
 }
 
 type Session interface {
-	Peer
-
 	//发包
 	Send(interface{})
 
@@ -68,6 +65,7 @@ type Session interface {
 	Close()
 
 	//标示ID
+	SetID(int64)
 	GetID() int64
 
 	//归属端
@@ -83,4 +81,12 @@ type SessionManager interface {
 
 	//连接数量
 	SessionCount() int
+}
+
+type ServerSession interface {
+	Session
+}
+
+type ClientSession interface {
+	Session
 }
