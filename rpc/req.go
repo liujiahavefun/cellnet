@@ -17,8 +17,8 @@ var (
 )
 
 var (
-	errInvalidPeerSession   error = errors.New("rpc: invalid peer type, require connector")
-	errConnectorSesNotReady error = errors.New("rpc: connector session not ready")
+	ErrorInvalidPeerSession   error = errors.New("rpc: invalid peer type, require connector")
+	ErrorConnectorSessionNotReady error = errors.New("rpc: connector session not ready")
 )
 
 // 添加一个rpc的调用信息
@@ -65,14 +65,14 @@ func getPeerSession(p interface{}) (cellnet.Session, cellnet.EventDispatcher, er
 			if connPeer, ok := p.(interface {Session() cellnet.Session}); ok {
 				ses = connPeer.Session()
 			} else {
-				return nil, nil, errInvalidPeerSession
+				return nil, nil, ErrorInvalidPeerSession
 			}
 		case cellnet.Session:
 			ses = p.(cellnet.Session)
 	}
 
 	if ses == nil {
-		return nil, nil, errConnectorSesNotReady
+		return nil, nil, ErrorConnectorSessionNotReady
 	}
 
 	return ses, ses.FromPeer().(cellnet.EventDispatcher), nil

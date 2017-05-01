@@ -2,8 +2,8 @@ package rpc
 
 import (
 	"cellnet"
-	"cellnet/proto/gamedef"
 	"cellnet/socket"
+	"cellnet/proto/gamedef"
 )
 
 type Response interface {
@@ -16,9 +16,7 @@ type response struct {
 }
 
 func (self *response) Feedback(msg interface{}) {
-
 	pkt, _ := cellnet.BuildPacket(msg)
-
 	self.ses.Send(&gamedef.RemoteCallACK{
 		MsgID:  pkt.MsgID,
 		Data:   pkt.Data,

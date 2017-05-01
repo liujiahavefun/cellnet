@@ -62,7 +62,7 @@ func msgLog(dir string, ses cellnet.Session, pkt *cellnet.Packet) {
 	}
 
 	if pkt == nil {
-		fmt.Println("pkt is nill")
+		//fmt.Println("pkt is nill")
 		return
 	}
 

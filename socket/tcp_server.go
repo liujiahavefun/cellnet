@@ -5,7 +5,6 @@ import (
 
 	"cellnet"
 	"cellnet/proto/gamedef"
-	"fmt"
 )
 
 type TcpServer struct {
@@ -106,12 +105,12 @@ func (self *TcpServer) GetAddress() string {
 }
 
 func (self *TcpServer) onSessionConnectedFunc(session cellnet.Session) {
-	fmt.Println("liujia, tcp_server onSessionConnectedFunc: ", session)
+	//fmt.Println("liujia, tcp_server onSessionConnectedFunc: ", session)
 	self.evq.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
 }
 
 func (self *TcpServer) onSessionClosedFunc(session cellnet.Session) {
-	fmt.Println("liujia, tcp_server onSessionClosedFunc: ", session)
+	//fmt.Println("liujia, tcp_server onSessionClosedFunc: ", session)
 	self.sessionMgr.Remove(session)
 
 	/*
@@ -124,7 +123,7 @@ func (self *TcpServer) onSessionClosedFunc(session cellnet.Session) {
 }
 
 func (self *TcpServer) onSessionErrorFunc(session cellnet.Session, err error) {
-	fmt.Println("liujia, tcp_server onSessionErrorFunc: ", session, err)
+	//fmt.Println("liujia, tcp_server onSessionErrorFunc: ", session, err)
 	//TODO: Event_SessionClosed to Event_SessionError
 	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: err.Error()})
 
@@ -133,7 +132,7 @@ func (self *TcpServer) onSessionErrorFunc(session cellnet.Session, err error) {
 }
 
 func (self *TcpServer) onSessionRecvPacketFunc(session cellnet.Session, packet *cellnet.Packet) {
-	fmt.Println("liujia, tcp_server onSessionRecvPacketFunc: ", session, packet)
+	//fmt.Println("liujia, tcp_server onSessionRecvPacketFunc: ", session, packet)
 	msgLog("recv", session, packet)
 	self.evq.Post(self, &SessionEvent{
 		Packet: packet,
