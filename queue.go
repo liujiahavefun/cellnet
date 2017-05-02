@@ -35,7 +35,7 @@ type eventQueue struct {
 
 func NewEventQueue() EventQueue {
 	self := &eventQueue{
-		queue:      make(chan queueData, 10),
+		queue:      make(chan queueData, 1000),
 		exitSignal: make(chan int),
 	}
 

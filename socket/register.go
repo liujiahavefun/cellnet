@@ -4,18 +4,18 @@ import (
 	"cellnet"
 )
 
-func MessageRegistedCount(evd cellnet.EventDispatcher, msgName string) int {
+type RegisterMessageContext struct {
+	*cellnet.MessageMeta
+	*cellnet.CallbackContext
+}
+
+func MessageRegisteredCount(evd cellnet.EventDispatcher, msgName string) int {
 	msgMeta := cellnet.MessageMetaByName(msgName)
 	if msgMeta == nil {
 		return 0
 	}
 
 	return evd.CountByID(msgMeta.ID)
-}
-
-type RegisterMessageContext struct {
-	*cellnet.MessageMeta
-	*cellnet.CallbackContext
 }
 
 //注册连接消息

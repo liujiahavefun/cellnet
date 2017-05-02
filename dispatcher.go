@@ -48,7 +48,6 @@ func (self *eventDispatcher) AddCallback(id uint32, f func(interface{})) *Callba
 	ctxList, ok := self.handlerByMsgPeer[id]
 	if !ok {
 		ctxList = make([]*CallbackContext, 0)
-
 	}
 
 	newCtx := &CallbackContext{

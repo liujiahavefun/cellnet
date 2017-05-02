@@ -8,8 +8,10 @@ import (
 	"cellnet"
 	"cellnet/proto/gamedef"
 	"cellnet/socket"
+	"fmt"
 )
 
+//TODO: 这里用map保存一个递增的
 var (
 	reqByID  = make(map[int64]*request)
 	reqGuard sync.RWMutex
@@ -21,30 +23,24 @@ var (
 	ErrorConnectorSessionNotReady error = errors.New("rpc: connector session not ready")
 )
 
-// 添加一个rpc的调用信息
+//添加一个rpc的调用信息
 func addCall(req *request) {
-
 	reqGuard.Lock()
+	defer reqGuard.Unlock()
 
 	idacc++
-
 	req.id = idacc
 
-	// TODO 底层支持timer, 抛出一个超时检测, 清理map
+	//TODO 底层支持timer, 抛出一个超时检测, 清理map
 	reqByID[req.id] = req
-
-	reqGuard.Unlock()
-
 }
 
-// 获取一个rpc调用信息
+//获取一个rpc调用信息
 func getCall(id int64) *request {
-
 	reqGuard.RLock()
 	defer reqGuard.RUnlock()
 
 	if v, ok := reqByID[id]; ok {
-
 		return v
 	}
 
@@ -53,8 +49,9 @@ func getCall(id int64) *request {
 
 func removeCall(id int64) {
 	reqGuard.Lock()
+	defer reqGuard.Unlock()
+
 	delete(reqByID, id)
-	reqGuard.Unlock()
 }
 
 //从peer获取rpc使用的session
@@ -62,6 +59,8 @@ func getPeerSession(p interface{}) (cellnet.Session, cellnet.EventDispatcher, er
 	var ses cellnet.Session
 	switch p.(type) {
 		case cellnet.Peer:
+			//liujia: interface {Session() cellnet.Session}判断p这个interface是否实现了"Session() cellnet.Session"这个函数
+			//通常如果p的实现了cellnet.Peer，那么p是Connector
 			if connPeer, ok := p.(interface {Session() cellnet.Session}); ok {
 				ses = connPeer.Session()
 			} else {
@@ -75,21 +74,19 @@ func getPeerSession(p interface{}) (cellnet.Session, cellnet.EventDispatcher, er
 		return nil, nil, ErrorConnectorSessionNotReady
 	}
 
+	//liujia: FromPeer()返回的是myself，对于server_session就是Server，对于client_session就是Connector，而这俩都是EventDispatcher
 	return ses, ses.FromPeer().(cellnet.EventDispatcher), nil
 }
 
-// 传入peer或者session
+//传入peer或者session
 func Call(p interface{}, args interface{}, callback interface{}) {
-
 	ses, evd, err := getPeerSession(p)
-
 	if err != nil {
 		log.Errorln(err)
 		return
 	}
 
 	_, msg := newRequest(evd, args, callback)
-
 	ses.Send(msg)
 
 	// TODO rpc日志
@@ -98,7 +95,6 @@ func Call(p interface{}, args interface{}, callback interface{}) {
 // 传入peer或者session
 func CallSync(p interface{}, args interface{}, callback interface{}) {
 	ses, evq, err := getPeerSession(p)
-
 	if err != nil {
 		log.Errorln(err)
 		return
@@ -108,9 +104,9 @@ func CallSync(p interface{}, args interface{}, callback interface{}) {
 	req.recvied = make(chan bool)
 
 	ses.Send(msg)
-
 	<-req.recvied
 
+	// TODO rpc日志
 }
 
 type request struct {
@@ -121,7 +117,6 @@ type request struct {
 }
 
 func (self *request) done(msg *gamedef.RemoteCallACK) {
-
 	rawType, err := cellnet.ParsePacket(&cellnet.Packet{
 		MsgID: msg.MsgID,
 		Data:  msg.Data,
@@ -140,22 +135,20 @@ func (self *request) done(msg *gamedef.RemoteCallACK) {
 	if self.recvied != nil {
 		self.recvied <- true
 	}
-
 }
 
-var needRegisterClient bool = true
-var needRegisterClientGuard sync.Mutex
+//var needRegisterClient bool = true
+//var needRegisterClientGuard sync.Mutex
+var once sync.Once
 
 func newRequest(evd cellnet.EventDispatcher, args interface{}, callback interface{}) (*request, interface{}) {
-
+	//第一次请求时注册消息
+	/*
 	needRegisterClientGuard.Lock()
 	if needRegisterClient {
-		// 请求端
 		socket.RegisterMessage(evd, "gamedef.RemoteCallACK", func(content interface{}, ses cellnet.Session) {
 			msg := content.(*gamedef.RemoteCallACK)
-
 			c := getCall(msg.CallID)
-
 			if c == nil {
 				return
 			}
@@ -166,6 +159,19 @@ func newRequest(evd cellnet.EventDispatcher, args interface{}, callback interfac
 		needRegisterClient = false
 	}
 	needRegisterClientGuard.Unlock()
+	*/
+
+	once.Do(func() {
+		socket.RegisterMessage(evd, "gamedef.RemoteCallACK", func(content interface{}, ses cellnet.Session) {
+			msg := content.(*gamedef.RemoteCallACK)
+			c := getCall(msg.CallID)
+			if c == nil {
+				return
+			}
+
+			c.done(msg)
+		})
+	})
 
 	req := &request{}
 
@@ -174,7 +180,6 @@ func newRequest(evd cellnet.EventDispatcher, args interface{}, callback interfac
 	req.callback = reflect.ValueOf(callback)
 
 	pkt, _ := cellnet.BuildPacket(args)
-
 	addCall(req)
 
 	return req, &gamedef.RemoteCallREQ{

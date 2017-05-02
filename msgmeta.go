@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+//liujia: Type是proto.Message的实际类型，Name是类似gamedef.TestEchoACK的名字，ID实际是对应的消息号MsgID
 type MessageMeta struct {
 	Type reflect.Type
 	Name string
@@ -39,7 +40,8 @@ func MessageMetaByName(name string) *MessageMeta {
 	return nil
 }
 
-//消息全名
+//消息全名，类似gamedef.TestEchoACK，rtype.PkgPath()返回完整package名字类似cellnet/proto/gamedef，path.Base()后变为gamedef
+//所以这里要求注册时都要用gamedef.TestEchoACK这种形式？
 func MessageFullName(rtype reflect.Type) string {
 	if rtype.Kind() == reflect.Ptr {
 		rtype = rtype.Elem()
