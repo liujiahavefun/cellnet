@@ -6,5 +6,5 @@ if [ ! -d "${outdir}" ]; then
 　　mkdir ${outdir}
 fi
 
-protoc --plugin=protoc-gen-go=${plugindir}/protoc-gen-go --go_out ${outdir} --proto_path "." core.proto
-protoc --plugin=protoc-gen-msg=../protoc-gen-msg/protoc-gen-msg --msg_out=msgid.go:${outdir} --proto_path "." core.proto
+protoc --plugin=protoc-gen-go=${plugindir}/protoc-gen-go --go_out ${outdir} --proto_path "." core.proto core.proto
+protoc --plugin=protoc-gen-msg=../protoc-gen-msg/protoc-gen-msg --msg_out=msgid.go:${outdir} --proto_path "." core.proto core.proto

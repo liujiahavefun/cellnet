@@ -33,6 +33,21 @@ func main() {
 		log.Errorln("no files to generate")
 	}
 
+	if len(Request.ProtoFile) == 0 {
+		log.Errorln("no proto file")
+	}
+
+	var packageName string
+	for i, file := range Request.ProtoFile {
+		if i == 0 {
+			packageName = *file.Package
+		}else {
+			if packageName != *file.Package {
+				log.Errorln("could handle ONLY ONE PACKAGE for all protos")
+			}
+		}
+	}
+
 	//建立解析池
 	pool := pbmeta.NewDescriptorPool(&pbprotos.FileDescriptorSet{
 		File: Request.ProtoFile,
@@ -40,7 +55,7 @@ func main() {
 
 	Response.File = make([]*plugin.CodeGeneratorResponse_File, 0)
 
-	context, ok := printFile(pool)
+	context, ok := printFile(pool, packageName)
 	if !ok {
 		os.Exit(1)
 	}
