@@ -35,7 +35,6 @@ func init() {
 
 type msgModel struct {
 	*pbmeta.Descriptor
-
 	parent *pbmeta.FileDescriptor
 }
 
@@ -49,7 +48,6 @@ func (self *msgModel) FullName() string {
 
 type protoModel struct {
 	*pbmeta.FileDescriptor
-
 	Messages []*msgModel
 }
 
@@ -63,6 +61,9 @@ type fileModel struct {
 }
 
 func printFile(pool *pbmeta.DescriptorPool) (string, bool) {
+	fmt.Println("")
+	fmt.Println(pool)
+	fmt.Println("")
 
 	tpl, err := template.New("msgid").Parse(codeTemplate)
 	if err != nil {
@@ -73,28 +74,21 @@ func printFile(pool *pbmeta.DescriptorPool) (string, bool) {
 	var model fileModel
 
 	for f := 0; f < pool.FileCount(); f++ {
-
 		file := pool.File(f)
-
 		pm := &protoModel{
 			FileDescriptor: file,
 		}
 
 		for m := 0; m < file.MessageCount(); m++ {
-
 			d := file.Message(m)
-
 			pm.Messages = append(pm.Messages, &msgModel{
 				Descriptor: d,
 				parent:     file,
 			})
-
 		}
 
 		model.TotalMessages += file.MessageCount()
-
 		model.Protos = append(model.Protos, pm)
-
 	}
 
 	var bf bytes.Buffer
@@ -115,9 +109,8 @@ func printFile(pool *pbmeta.DescriptorPool) (string, bool) {
 }
 
 func formatCode(bf *bytes.Buffer) error {
-	// Reformat generated code.
+	//reformat generated code.
 	fset := token.NewFileSet()
-
 	ast, err := parser.ParseFile(fset, "", bf, parser.ParseComments)
 	if err != nil {
 		return err

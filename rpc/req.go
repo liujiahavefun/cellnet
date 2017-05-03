@@ -8,7 +8,6 @@ import (
 	"cellnet"
 	"cellnet/proto/gamedef"
 	"cellnet/socket"
-	"fmt"
 )
 
 //TODO: 这里用map保存一个递增的
@@ -129,7 +128,7 @@ func (self *request) done(msg *gamedef.RemoteCallACK) {
 		return
 	}
 
-	// 这里的反射, 会影响非常少的效率, 但因为外部写法简单, 就算了
+	//这里的反射, 会影响非常少的效率, 但因为外部写法简单, 就算了
 	self.callback.Call([]reflect.Value{reflect.ValueOf(rawType)})
 
 	if self.recvied != nil {
@@ -175,6 +174,9 @@ func newRequest(evd cellnet.EventDispatcher, args interface{}, callback interfac
 
 	req := &request{}
 
+	//liujia:replyType是callback函数的第一个参数的类型
+	//如果rpc的对端返回的结果的类型与这个不一致，则会在ParsePacket()时报错
+	//大概这个样子：proto: bad wiretype for field gamedef.RemoteCallACK.MsgID: got wiretype 2, want 0
 	funcType := reflect.TypeOf(callback)
 	req.replyType = funcType.In(0)
 	req.callback = reflect.ValueOf(callback)

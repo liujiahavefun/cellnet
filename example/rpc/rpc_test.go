@@ -24,7 +24,7 @@ func server() {
 
 	rpc.RegisterMessage(server, "gamedef.TestEchoACK", func(content interface{}, resp rpc.Response) {
 		msg := content.(*gamedef.TestEchoACK)
-		log.Debugln("server recv:", msg.String())
+		log.Debugln("server recv:", msg.Content)
 
 		resp.Feedback(&gamedef.TestEchoACK{
 			Content: "server recv:" + msg.Content,
