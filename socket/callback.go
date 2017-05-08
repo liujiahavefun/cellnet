@@ -43,12 +43,10 @@ type SessionCallback struct {
 	OnRecvPacket 	OnSessionRecvPacketFunc
 }
 
-func NewSessionCallback(onConnected OnSessionConnectedFunc,
-				 		onClosed OnSessionClosedFunc,
+func NewSessionCallback(onClosed OnSessionClosedFunc,
 						onError OnSessionErrorFunc,
 						onPacket OnSessionRecvPacketFunc) *SessionCallback {
 	return &SessionCallback{
-		OnConnected: onConnected,
 		OnClosed: onClosed,
 		OnError: onError,
 		OnRecvPacket: onPacket,

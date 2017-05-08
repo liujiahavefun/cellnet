@@ -22,13 +22,16 @@ type sessionBase struct {
 	onSessionRecvPacketFunc OnSessionRecvPacketFunc
 }
 
-func newSessionBase(stream *ltvStream, myself cellnet.Peer, otherSide cellnet.Peer) *sessionBase {
+func newSessionBase(stream *ltvStream, myself cellnet.Peer, otherSide cellnet.Peer, callbacks *SessionCallback) *sessionBase {
 	self := &sessionBase{
 		stream:          stream,
 		myself:        	 myself,
 		otherSide:       otherSide,
 		needNotifyWrite: true,
 		sendList:        NewPacketList(),
+		onSessionClosedFunc: callbacks.OnClosed,
+		onSessionErrorFunc: callbacks.OnError,
+		onSessionRecvPacketFunc: callbacks.OnRecvPacket,
 	}
 
 	//使用peer的统一设置

@@ -35,6 +35,8 @@ type TcpConnector struct {
 	closeSignal chan bool
 
 	defaultSes cellnet.Session
+
+	sessionCallbacks *SessionCallback
 }
 
 func NewConnector(evq cellnet.EventQueue) cellnet.Connector {
@@ -45,6 +47,10 @@ func NewConnector(evq cellnet.EventQueue) cellnet.Connector {
 		evq:         evq,
 		closeSignal: make(chan bool),
 	}
+
+	self.sessionCallbacks = NewSessionCallback(self.onSessionClosedFunc,
+		self.onSessionErrorFunc,
+		self.onSessionRecvPacketFunc)
 
 	return self
 }
@@ -96,13 +102,14 @@ func (self *TcpConnector) connect(address string) {
 		self.conn = conn
 
 		//创建Session
-		ses := newClientSession(conn, self)
+		ses := newClientSession(conn, self, self.sessionCallbacks)
 		self.sessionMgr.Add(ses)
 		self.defaultSes = ses
 
 		logInfof("#connected(%s) %s sid: %d", self.name, address, ses.id)
 
 		//设置回调
+		/*
 		ses.onSessionClosedFunc = func(session cellnet.Session) {
 			self.sessionMgr.Remove(session)
 			self.closeSignal <- true
@@ -121,6 +128,7 @@ func (self *TcpConnector) connect(address string) {
 				Ses:    session,
 			})
 		}
+		*/
 
 		// 抛出事件
 		self.evq.Post(self, NewSessionEvent(Event_SessionConnected, ses, nil))
@@ -159,4 +167,25 @@ func (self *TcpConnector) Session() cellnet.Session {
 //设置自动重连间隔, 秒为单位，0表示不重连
 func (self *TcpConnector) SetAutoReconnectSec(sec int) {
 	self.autoReconnectSec = sec
+}
+
+func (self *TcpConnector) onSessionClosedFunc(session cellnet.Session) {
+	self.sessionMgr.Remove(session)
+	self.closeSignal <- true
+
+	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: ""})
+
+	//post断开事件
+	self.evq.Post(self, ev)
+}
+
+func (self *TcpConnector) onSessionErrorFunc(session cellnet.Session, err error) {
+
+}
+
+func (self *TcpConnector) onSessionRecvPacketFunc(session cellnet.Session, packet *cellnet.Packet) {
+	self.evq.Post(self, &SessionEvent{
+		Packet: packet,
+		Ses:    session,
+	})
 }

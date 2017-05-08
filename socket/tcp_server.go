@@ -14,7 +14,7 @@ type TcpServer struct {
 	cellnet.EventDispatcher
 	evq cellnet.EventQueue
 
-	//sessionCallback *SessionCallback
+	sessionCallbacks *SessionCallback
 
 	address string
 	running bool //TODO: 用atomic代替
@@ -29,12 +29,9 @@ func NewTcpServer(evq cellnet.EventQueue) cellnet.Server {
 		sessionMgr: newSessionManager(),
 	}
 
-	/*
-	self.sessionCallback = NewSessionCallback(self.onSessionConnectedFunc,
-											  self.onSessionClosedFunc,
+	self.sessionCallbacks = NewSessionCallback(self.onSessionClosedFunc,
 											  self.onSessionErrorFunc,
 											  self.onSessionRecvPacketFunc)
-	*/
 
 	return self
 }
@@ -64,13 +61,7 @@ func (self *TcpServer) Start(address string) cellnet.Server {
 
 			//处理连接进入独立线程, 防止accept无法响应
 			go func() {
-				session := newServerSession(conn, self)
-
-				//断开后从管理器移除
-				//TODO: 这里可以再给外部一个回调，或者post一个事件
-				session.onSessionClosedFunc = self.onSessionClosedFunc
-				session.onSessionErrorFunc = self.onSessionErrorFunc
-				session.onSessionRecvPacketFunc = self.onSessionRecvPacketFunc
+				session := newServerSession(conn, self, self.sessionCallbacks)
 
 				//添加到管理器
 				self.sessionMgr.Add(session)

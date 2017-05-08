@@ -19,13 +19,13 @@ type tcpServerSession struct {
 	*sessionBase
 }
 
-func newServerSession(conn net.Conn, server cellnet.Server) *tcpServerSession {
+func newServerSession(conn net.Conn, server cellnet.Server, callbacks *SessionCallback) *tcpServerSession {
 	otherPeer := newPeerBase()
 	otherPeer.SetName(conn.RemoteAddr().String())
 	otherPeer.SetMaxPacketSize(server.MaxPacketSize())
 
 	session := &tcpServerSession{
-		sessionBase: newSessionBase(NewPacketStream(conn), server, otherPeer),
+		sessionBase: newSessionBase(NewPacketStream(conn), server, otherPeer, callbacks),
 	}
 
 	return session
