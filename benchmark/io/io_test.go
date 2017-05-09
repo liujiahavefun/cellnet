@@ -25,7 +25,7 @@ const clientCount = 10000
 
 // 测试时间(秒)
 const benchmarkSeconds = 20
-cd
+
 func server() {
 	queue := cellnet.NewEventQueue()
 	qpsm := benchmark.NewQPSMeter(queue, func(qps int) {
