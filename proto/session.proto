@@ -6,31 +6,31 @@ package gamedef3;
 //Session事件消息
 //==========================================================
 
-// 一个连接接入
+//一个连接被Accept
 message SessionAccepted
 {
 
 }
 
-// 已连接
-message SessionConnected
-{
-
-}
-
-// 接受错误
+//Accept发生错误
 message SessionAcceptFailed
 {
 	string Reason = 1;
 }
 
-// 连接错误
+//Session已经建立
+message SessionConnected
+{
+
+}
+
+//Session建立出现错误
 message SessionConnectFailed
 {
 	string Reason = 1;
 }
 
-// 连接断开
+//Session关闭
 message SessionClosed
 {
 	string Reason = 1;

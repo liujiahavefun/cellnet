@@ -24,12 +24,11 @@ var signal *test.SignalTester
 const benchmarkAddress = "127.0.0.1:7201"
 
 // 客户端并发数量
-const clientCount = 20000
+const clientCount = 2000
 
 // 测试时间(秒)
 const benchmarkSeconds = 20
 
-// 多少client connected了
 var(
 	acceptedServerSession int64
 	connectedServerSession int64
@@ -83,7 +82,7 @@ func client() {
 	})
 
 	socket.RegisterMessage(connector, "gamedef.TestEchoACK", func(content interface{}, ses cellnet.Session) {
-		ses.Send(&gamedef.TestEchoACK{})
+		//ses.Send(&gamedef.TestEchoACK{})
 	})
 
 	connector.Start(benchmarkAddress)
@@ -118,17 +117,21 @@ func TestIO(t *testing.T) {
 
 func EnableManyFiles() {
 	var rlim syscall.Rlimit
-	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
+
+	rlim.Cur = 50000
+	rlim.Max = 50000
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
+	if err != nil {
+		fmt.Println("set rlimit error: " + err.Error())
+		os.Exit(1)
+	}
+
+	err = syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
 		fmt.Println("get rlimit error: " + err.Error())
 		os.Exit(1)
 	}
 
-	rlim.Cur = 50000
-	rlim.Max = 50000
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		fmt.Println("set rlimit error: " + err.Error())
-		os.Exit(1)
-	}
+	fmt.Println("rlim.Curr", rlim.Cur)
+	fmt.Println("rlim.Max", rlim.Max)
 }
