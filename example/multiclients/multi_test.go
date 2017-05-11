@@ -1,4 +1,4 @@
-package benchmark
+package main
 
 import (
 	"testing"
@@ -25,10 +25,10 @@ var signal *test.SignalTester
 const benchmarkAddress = "127.0.0.1:7201"
 
 // 客户端并发数量
-const clientCount = 200
+const clientCount = 8000
 
 // 测试时间(秒)
-const benchmarkSeconds = 20
+const benchmarkSeconds = 2000
 
 var(
 	acceptedServerSession int64
@@ -55,7 +55,7 @@ func server() {
 	socket.RegisterMessage(server, "session.SessionAccepted", func(content interface{}, ses cellnet.Session) {
 		atomic.AddInt64(&acceptedServerSession, 1)
 	})
-	
+
 	socket.RegisterMessage(server, "session.SessionAcceptFailed", func(content interface{}, ses cellnet.Session) {
 		msg := content.(*gamedef.SessionAcceptFailed)
 		log.Infof("SessionAcceptFailed, err: %v", msg.Reason)
@@ -93,7 +93,7 @@ func client() {
 	})
 
 	socket.RegisterMessage(connector, "gamedef.TestEchoACK", func(content interface{}, ses cellnet.Session) {
-		ses.Send(&gamedef.TestEchoACK{})
+		//ses.Send(&gamedef.TestEchoACK{})
 	})
 
 	connector.Start(benchmarkAddress)
@@ -103,7 +103,6 @@ func client() {
 
 func TestIO(t *testing.T) {
 	EnableManyFiles()
-	
 	// 屏蔽socket层的调试日志
 	golog.SetLevelByString("socket", "error")
 
@@ -118,6 +117,7 @@ func TestIO(t *testing.T) {
 
 	log.Infoln("start all clients")
 	for i := 0; i < clientCount; i++ {
+		time.Sleep(50*time.Millisecond)
 		go client()
 	}
 

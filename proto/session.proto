@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package gamedef3;
+package session;
 
 //==========================================================
 //Session事件消息
@@ -30,8 +30,14 @@ message SessionConnectFailed
 	string Reason = 1;
 }
 
-//Session关闭
+//Session关闭，因为错误被关闭，就填eason好喽
 message SessionClosed
+{
+	string Reason = 1;
+}
+
+//Session有错误
+message SessionError
 {
 	string Reason = 1;
 }

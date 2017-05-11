@@ -4,7 +4,7 @@ import (
 	"net"
 
 	"cellnet"
-	"cellnet/proto/gamedef"
+	"cellnet/proto/session"
 )
 
 type TcpServer struct {
@@ -55,9 +55,11 @@ func (self *TcpServer) Start(address string) cellnet.Server {
 			if err != nil {
 				//TODO: onErrorFunc instead, 别随地胡逼抛事件
 				logErrorf("#accept failed(%s) %v", self.name, err.Error())
-				self.evq.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &gamedef.SessionAcceptFailed{Reason: err.Error()}))
+				self.evq.Post(self, newSessionEvent(Event_SessionAcceptFailed, nil, &session.SessionAcceptFailed{Reason: err.Error()}))
 				break
 			}
+
+			self.evq.Post(self, newSessionEvent(Event_SessionAccepted, nil, &session.SessionAccepted{}))
 
 			//处理连接进入独立线程, 防止accept无法响应
 			go func() {
@@ -95,14 +97,16 @@ func (self *TcpServer) GetAddress() string {
 	return self.address
 }
 
-func (self *TcpServer) onSessionConnectedFunc(session cellnet.Session) {
+func (self *TcpServer) onSessionConnectedFunc(sess cellnet.Session) {
 	//fmt.Println("liujia, tcp_server onSessionConnectedFunc: ", session)
-	self.evq.Post(self, NewSessionEvent(Event_SessionAccepted, session, nil))
+	self.evq.Post(self, NewSessionEvent(Event_SessionConnected, sess, nil))
 }
 
-func (self *TcpServer) onSessionClosedFunc(session cellnet.Session) {
+func (self *TcpServer) onSessionClosedFunc(sess cellnet.Session) {
 	//fmt.Println("liujia, tcp_server onSessionClosedFunc: ", session)
-	self.sessionMgr.Remove(session)
+	self.sessionMgr.Remove(sess)
+	ev := newSessionEvent(Event_SessionClosed, sess, &session.SessionClosed{Reason: ""})
+	self.evq.Post(self, ev)
 
 	/*
 	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: err.Error()})
@@ -113,20 +117,20 @@ func (self *TcpServer) onSessionClosedFunc(session cellnet.Session) {
 	*/
 }
 
-func (self *TcpServer) onSessionErrorFunc(session cellnet.Session, err error) {
+func (self *TcpServer) onSessionErrorFunc(sess cellnet.Session, err error) {
 	//fmt.Println("liujia, tcp_server onSessionErrorFunc: ", session, err)
 	//TODO: Event_SessionClosed to Event_SessionError
-	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: err.Error()})
+	ev := newSessionEvent(Event_SessionError, sess, &session.SessionError{Reason: err.Error()})
 
 	//post断开事件
 	self.evq.Post(self, ev)
 }
 
-func (self *TcpServer) onSessionRecvPacketFunc(session cellnet.Session, packet *cellnet.Packet) {
+func (self *TcpServer) onSessionRecvPacketFunc(sess cellnet.Session, packet *cellnet.Packet) {
 	//fmt.Println("liujia, tcp_server onSessionRecvPacketFunc: ", session, packet)
-	msgLog("recv", session, packet)
+	msgLog("recv", sess, packet)
 	self.evq.Post(self, &SessionEvent{
 		Packet: packet,
-		Ses:    session,
+		Ses:    sess,
 	})
 }

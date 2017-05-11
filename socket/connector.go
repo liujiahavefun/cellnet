@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"cellnet"
-	"cellnet/proto/gamedef"
+	"cellnet/proto/session"
 )
 
 const (
@@ -75,6 +75,9 @@ func (self *TcpConnector) connect(address string) {
 		//去连接
 		conn, err := net.Dial("tcp", address)
 		if err != nil {
+			ev := newSessionEvent(Event_SessionError, nil, &session.SessionError{Reason:err.Error()})
+			self.evq.Post(self, ev)
+
 			if self.tryConnTimes <= DEFAULT_CONNECT_RETRY_TIMES {
 				logErrorf("#connect failed(%s) %v", self.name, err.Error())
 			}
@@ -85,7 +88,7 @@ func (self *TcpConnector) connect(address string) {
 
 			//没重连就退出
 			if self.autoReconnectSec == 0 {
-				self.evq.Post(self, newSessionEvent(Event_SessionConnectFailed, nil, &gamedef.SessionConnectFailed{Reason: err.Error()}))
+				self.evq.Post(self, newSessionEvent(Event_SessionConnectFailed, nil, &session.SessionConnectFailed{Reason: err.Error()}))
 				break
 			}
 
@@ -169,13 +172,12 @@ func (self *TcpConnector) SetAutoReconnectSec(sec int) {
 	self.autoReconnectSec = sec
 }
 
-func (self *TcpConnector) onSessionClosedFunc(session cellnet.Session) {
-	self.sessionMgr.Remove(session)
+func (self *TcpConnector) onSessionClosedFunc(ses cellnet.Session) {
+	self.sessionMgr.Remove(ses)
 	self.closeSignal <- true
 
-	ev := newSessionEvent(Event_SessionClosed, session, &gamedef.SessionClosed{Reason: ""})
-
 	//post断开事件
+	ev := newSessionEvent(Event_SessionClosed, ses, &session.SessionClosed{})
 	self.evq.Post(self, ev)
 }
 

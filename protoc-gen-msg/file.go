@@ -20,7 +20,7 @@ package {{.PackageName}}
 
 {{if gt .TotalMessages 0}}
 import (
-	"github.com/davyxu/cellnet"
+	"cellnet"
 )
 {{end}}
 

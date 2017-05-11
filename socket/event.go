@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"cellnet"
-	_ "cellnet/proto/gamedef"
+	_ "cellnet/proto/session"
 )
 
 var (
-	Event_SessionAccepted      = uint32(cellnet.MessageMetaByName("gamedef.SessionAccepted").ID)
-	Event_SessionAcceptFailed  = uint32(cellnet.MessageMetaByName("gamedef.SessionAcceptFailed").ID)
-	Event_SessionConnected     = uint32(cellnet.MessageMetaByName("gamedef.SessionConnected").ID)
-	Event_SessionClosed        = uint32(cellnet.MessageMetaByName("gamedef.SessionClosed").ID)
-	Event_SessionConnectFailed = uint32(cellnet.MessageMetaByName("gamedef.SessionConnectFailed").ID)
+	Event_SessionAccepted      = uint32(cellnet.MessageMetaByName("session.SessionAccepted").ID)
+	Event_SessionAcceptFailed  = uint32(cellnet.MessageMetaByName("session.SessionAcceptFailed").ID)
+	Event_SessionConnected     = uint32(cellnet.MessageMetaByName("session.SessionConnected").ID)
+	Event_SessionConnectFailed = uint32(cellnet.MessageMetaByName("session.SessionConnectFailed").ID)
+	Event_SessionClosed        = uint32(cellnet.MessageMetaByName("session.SessionClosed").ID)
+	Event_SessionError         = uint32(cellnet.MessageMetaByName("session.SessionError").ID)
 )
 
 //会话事件
