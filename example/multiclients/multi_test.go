@@ -25,7 +25,7 @@ var signal *test.SignalTester
 const benchmarkAddress = "127.0.0.1:7201"
 
 // 客户端并发数量
-const clientCount = 8000
+const clientCount = 10000
 
 // 测试时间(秒)
 const benchmarkSeconds = 2000
@@ -57,7 +57,7 @@ func server() {
 	})
 
 	socket.RegisterMessage(server, "session.SessionAcceptFailed", func(content interface{}, ses cellnet.Session) {
-		msg := content.(*gamedef.SessionAcceptFailed)
+		msg := content.(*session.SessionAcceptFailed)
 		log.Infof("SessionAcceptFailed, err: %v", msg.Reason)
 	})
 
@@ -128,9 +128,9 @@ func TestIO(t *testing.T) {
 
 func EnableManyFiles() {
 	var rlim syscall.Rlimit
-
 	rlim.Cur = 50000
 	rlim.Max = 50000
+
 	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
 		fmt.Println("set rlimit error: " + err.Error())
