@@ -5,3 +5,4 @@
 .idea/
 /example/*/log/
 
+benchmark/io/log/
