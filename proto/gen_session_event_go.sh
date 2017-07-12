@@ -1,5 +1,5 @@
 outdir=session
-plugindir=/Users/liujia/go/bin
+plugindir=$GOPATH/bin
 
 #outdir不存在则创建
 if [ ! -d "${outdir}" ]; then

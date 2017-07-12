@@ -52,6 +52,13 @@ func (m *SessionAcceptFailed) String() string            { return proto.CompactT
 func (*SessionAcceptFailed) ProtoMessage()               {}
 func (*SessionAcceptFailed) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
+func (m *SessionAcceptFailed) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
+
 // Session已经建立
 type SessionConnected struct {
 }
@@ -71,6 +78,13 @@ func (m *SessionConnectFailed) String() string            { return proto.Compact
 func (*SessionConnectFailed) ProtoMessage()               {}
 func (*SessionConnectFailed) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
+func (m *SessionConnectFailed) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
+
 // Session关闭，因为错误被关闭，就填eason好喽
 type SessionClosed struct {
 	Reason string `protobuf:"bytes,1,opt,name=Reason" json:"Reason,omitempty"`
@@ -81,6 +95,13 @@ func (m *SessionClosed) String() string            { return proto.CompactTextStr
 func (*SessionClosed) ProtoMessage()               {}
 func (*SessionClosed) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
+func (m *SessionClosed) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
+
 // Session有错误
 type SessionError struct {
 	Reason string `protobuf:"bytes,1,opt,name=Reason" json:"Reason,omitempty"`
@@ -90,6 +111,13 @@ func (m *SessionError) Reset()                    { *m = SessionError{} }
 func (m *SessionError) String() string            { return proto.CompactTextString(m) }
 func (*SessionError) ProtoMessage()               {}
 func (*SessionError) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *SessionError) GetReason() string {
+	if m != nil {
+		return m.Reason
+	}
+	return ""
+}
 
 func init() {
 	proto.RegisterType((*SessionAccepted)(nil), "session.SessionAccepted")
@@ -104,7 +132,7 @@ func init() { proto.RegisterFile("session.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
 	// 138 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2d, 0x4e, 0x2d, 0x2e,
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2d, 0x4e, 0x2d, 0x2e,
 	0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x87, 0x72, 0x95, 0x04, 0xb9,
 	0xf8, 0x83, 0x21, 0x4c, 0xc7, 0xe4, 0xe4, 0xd4, 0x82, 0x92, 0xd4, 0x14, 0x25, 0x5d, 0x2e, 0x61,
 	0x14, 0x21, 0xb7, 0xc4, 0xcc, 0x9c, 0xd4, 0x14, 0x21, 0x31, 0x2e, 0xb6, 0xa0, 0xd4, 0xc4, 0xe2,
